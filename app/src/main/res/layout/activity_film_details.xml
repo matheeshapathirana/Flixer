@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<!--    https://www.youtube.com/watch?v=K4CGYiQu52s-->
+<!--    https://developer.android.com/reference/android/widget/ScrollView-->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -98,7 +101,10 @@
             </LinearLayout>
 
         </LinearLayout>
-
+<!--        https://www.youtube.com/watch?v=QdJxWQY7SIE-->
+<!--        https://www.youtube.com/watch?v=0Qmtt81Ypyk-->
+<!--        https://developer.android.com/reference/com/google/android/material/chip/ChipGroup-->
+<!--        Idea from ChatGPT-->
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chip_group_genres"
             android:layout_width="match_parent"
@@ -179,6 +185,7 @@
             android:layout_marginBottom="24dp"
             android:gravity="center">
 
+<!--        https://developer.android.com/reference/com/google/android/material/button/MaterialButton-->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_add_watchlist"
                 android:layout_width="0dp"
