@@ -37,7 +37,13 @@ import java.util.Map;
 import com.squareup.picasso.Picasso;
 
 public class FilmDetailsActivity extends AppCompatActivity {
-    private static String TMBD_Movie_Search_URL = "https://api.themoviedb.org/3/movie/";
+    // Base endpoints
+    private static final String TMBD_Movie_Base_URL = "https://api.themoviedb.org/3/movie/";
+    private static final String TMBD_TV_Base_URL = "https://api.themoviedb.org/3/tv/";
+    private static final String TMBD_FIND_URL = "https://api.themoviedb.org/3/find/";
+
+    private static String TMBD_Movie_Search_URL = TMBD_Movie_Base_URL;
+    private static String TMBD_TV_Search_URL = TMBD_TV_Base_URL;
     private static String TMDB_Image_Base_URL = "https://image.tmdb.org/t/p/original";
     private static String TMBD_Profile_Picture_Base_URL = "https://image.tmdb.org/t/p/w185";
     private static String TMDB_Poster_Base_URL = "https://image.tmdb.org/t/p/w342";
@@ -61,10 +67,34 @@ public class FilmDetailsActivity extends AppCompatActivity {
     private SimilarAdapter similarAdapter;
     private String moreInfoHomepageUrl = "";
 
-    int ID = 950387;
+    int tmdbId = 497698;
+    //950387 - Minecraft Movie
+    //1328049 - Sinhala Movie
+    // 550 - Fight Club
+    // 603 - The Matrix
+    // 497698 - Black Widow
+    String providedId = null;
+    boolean isTv = false;
+    boolean triedMediaTypeFallback = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Intent intent = getIntent();
+        if (intent != null) {
+            providedId = intent.getStringExtra("id");
+            String explicitType = intent.getStringExtra("media_type");
+            if (explicitType != null) {
+                if (explicitType.equalsIgnoreCase("tv")) {
+                    isTv = true;
+                    TMBD_Movie_Search_URL = TMBD_TV_Base_URL;
+                } else if (explicitType.equalsIgnoreCase("movie")) {
+                    isTv = false;
+                    TMBD_Movie_Search_URL = TMBD_Movie_Base_URL;
+                }
+            }
+            applyActiveBaseUrl();
+        }
+
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_film_details);
@@ -104,21 +134,39 @@ public class FilmDetailsActivity extends AppCompatActivity {
 
         setupCastRecycler();
         setupSimilarRecycler();
-        LoadMovieDetails(ID);
+        if (providedId != null && !providedId.trim().isEmpty()) {
+            String trimmed = providedId.trim();
+            if (trimmed.startsWith("tt")) {
+                resolveFromImdbId(trimmed);
+            } else {
+                try {
+                    tmdbId = Integer.parseInt(trimmed);
+                } catch (NumberFormatException ignored) {}
+                LoadMovieDetails(tmdbId);
+            }
+        } else {
+            LoadMovieDetails(tmdbId);
+        }
     }
 
     private void LoadMovieDetails(int id) {
         cancelPendingRequests();
+        triedMediaTypeFallback = false;
         String endpoint = TMBD_Movie_Search_URL + id + "?language=en-US";
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, endpoint, null, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
+                            if (!response.isNull("success") && !response.optBoolean("success", true) && response.optInt("status_code", 0) == 34) {
+                                attemptMediaTypeFallback(id);
+                                return;
+                            }
                             String posterPath = response.optString("poster_path","");
                             updatePosterImage(posterPath);
                             moreInfoHomepageUrl = response.optString("homepage","").trim();
                             fetchExternalIds(id);
-
+                            fetchMovieCredits(id);
+                            fetchSimilarMovies(id);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -126,7 +174,9 @@ public class FilmDetailsActivity extends AppCompatActivity {
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        errorGettingData(error.toString());
+                        if (!attemptMediaTypeFallback(id, error)) {
+                            errorGettingData(error.toString());
+                        }
                     }
 
                 }) {
@@ -146,6 +196,104 @@ public class FilmDetailsActivity extends AppCompatActivity {
         queue.add(jsonObjectRequest);
         fetchMovieCredits(id);
         fetchSimilarMovies(id);
+        queue.add(jsonObjectRequest);
+    }
+    private boolean attemptMediaTypeFallback(int id) {
+        return attemptMediaTypeFallback(id, null);
+    }
+
+    private boolean attemptMediaTypeFallback(int id, VolleyError error) {
+        if (triedMediaTypeFallback) {
+            return false;
+        }
+
+        boolean shouldFallback = false;
+
+        if (error != null && error.networkResponse != null) {
+            int httpCode = error.networkResponse.statusCode;
+            if (httpCode == 404) {
+                shouldFallback = true;
+            } else {
+                try {
+                    String body = new String(error.networkResponse.data, "UTF-8");
+                    if (body.contains("\"status_code\":34")) {
+                        shouldFallback = true;
+                    }
+                } catch (Exception ignored) {}
+            }
+        } else if (error == null) {
+            shouldFallback = true;
+        }
+
+        if (!shouldFallback) {
+            return false;
+        }
+
+        triedMediaTypeFallback = true;
+        isTv = !isTv;
+        applyActiveBaseUrl();
+        LoadMovieDetails(id);
+        return true;
+    }
+
+    private void resolveFromImdbId(String imdbId) {
+        cancelPendingRequests();
+        String url = TMBD_FIND_URL + imdbId + "?external_source=imdb_id";
+        JsonObjectRequest findRequest = new JsonObjectRequest(Request.Method.GET, url, null,
+                response -> {
+                    try {
+                        JSONArray movieResults = response.optJSONArray("movie_results");
+                        JSONArray tvResults = response.optJSONArray("tv_results");
+
+                        if (movieResults != null && movieResults.length() > 0) {
+                            JSONObject first = movieResults.optJSONObject(0);
+                            if (first != null) {
+                                tmdbId = first.optInt("id", -1);
+                                isTv = false;
+                                TMBD_Movie_Search_URL = TMBD_Movie_Base_URL;
+                            }
+                        } else if (tvResults != null && tvResults.length() > 0) {
+                            JSONObject first = tvResults.optJSONObject(0);
+                            if (first != null) {
+                                tmdbId = first.optInt("id", -1);
+                                isTv = true;
+                                TMBD_Movie_Search_URL = TMBD_TV_Base_URL;
+                            }
+                        } else {
+                            errorGettingData("Unable to resolve IMDb id");
+                            return;
+                        }
+
+                        if (tmdbId <= 0) {
+                            errorGettingData("Invalid TMDB id");
+                            return;
+                        }
+                        LoadMovieDetails(tmdbId);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        errorGettingData("Parse error");
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        errorGettingData(error.toString());
+                    }
+                }) {
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Authorization", "Bearer " + TMDB_TOKEN);
+                headers.put("accept", "application/json");
+                return headers;
+            }
+        };
+        findRequest.setTag("find_request");
+        queue.add(findRequest);
+    }
+
+    private void applyActiveBaseUrl() {
+        TMBD_Movie_Search_URL = isTv ? TMBD_TV_Base_URL : TMBD_Movie_Base_URL;
     }
 
     private void fetchMovieCredits(int movieId) {
@@ -244,6 +392,11 @@ public class FilmDetailsActivity extends AppCompatActivity {
 
                                     int similarId = resultObject.optInt("id", -1);
                                     String title = resultObject.optString("title", "").trim();
+
+                                    if (title.isEmpty()) {
+                                        title = resultObject.optString("name", "").trim();
+                                    }
+
                                     String posterPath = resultObject.optString("poster_path", "");
                                     String posterUrl = buildPosterImageUrl(posterPath);
 
@@ -479,7 +632,7 @@ public class FilmDetailsActivity extends AppCompatActivity {
             return;
         }
 
-        ID = newId;
+        tmdbId = newId; // media type stays the same as similar endpoint matches current context
         title.setText("N/A");
         year.setText("N/A");
         imdb.setText("N/A");
