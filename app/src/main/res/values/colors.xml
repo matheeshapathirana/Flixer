@@ -9,4 +9,7 @@
     <color name="green">#4CAF50</color>
     <color name="primary_blue">#2196F3</color>
     <color name="secondary_gray">#424242</color>
+    <color name="button_primary_background">#C5A8FF</color>
+    <color name="button_text">#2E0F5B</color>
+    <color name="button_ripple">#402E0F5B</color>
 </resources>

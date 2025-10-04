@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Flixer</string>
+    <string name="cast_photo_content_description">Cast member photo</string>
+    <string name="similar_poster_content_description">Similar title poster</string>
 </resources>
