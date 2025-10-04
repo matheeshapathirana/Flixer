@@ -24,5 +24,6 @@
             android:name=".FilmDetailsActivity"
             android:exported="false" />
     </application>
+    <uses-permission android:name="android.permission.INTERNET"/>
 
 </manifest>
