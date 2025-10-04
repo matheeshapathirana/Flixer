@@ -11,13 +11,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.squareup.picasso.Picasso;
+
 public class SimilarAdapter extends RecyclerView.Adapter<SimilarViewHolder> {
     Context context;
     List<Similar> similarList = new ArrayList<>();
+    private final OnSimilarClickListener listener;
 
-    public SimilarAdapter(Context context, List<Similar> similarList) {
+    public SimilarAdapter(Context context, List<Similar> similarList, OnSimilarClickListener listener) {
         this.context = context;
         this.similarList = similarList;
+        this.listener = listener;
     }
 
     @NonNull
@@ -35,11 +39,29 @@ public class SimilarAdapter extends RecyclerView.Adapter<SimilarViewHolder> {
         Similar similar = similarList.get(position);
 
         holder.similar_film_title.setText(similar.getTitle());
-        holder.similar_film_poster.setImageResource(similar.getPoster());
+        String posterUrl = similar.getPosterUrl();
+        if (posterUrl == null || posterUrl.trim().isEmpty()) {
+            holder.similar_film_poster.setImageResource(R.drawable.loading);
+        } else {
+            Picasso.get().load(posterUrl).placeholder(R.drawable.loading).into(holder.similar_film_poster);
+        }
+
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (listener != null) {
+                    listener.onSimilarClicked(similar);
+                }
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
         return this.similarList.size();
+    }
+
+    public interface OnSimilarClickListener {
+        void onSimilarClicked(Similar similar);
     }
 }

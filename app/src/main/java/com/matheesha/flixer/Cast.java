@@ -3,9 +3,9 @@ package com.matheesha.flixer;
 public class Cast {
     private String actorName;
     private String characterName;
-    private int profileImageUrl;
+    private String profileImageUrl;
 
-    public Cast(String actorName, String characterName, int profileImageUrl) {
+    public Cast(String actorName, String characterName, String profileImageUrl) {
         this.actorName = actorName;
         this.characterName = characterName;
         this.profileImageUrl = profileImageUrl;
@@ -19,7 +19,7 @@ public class Cast {
         return characterName;
     }
 
-    public int getProfileImageUrl() {
+    public String getProfileImageUrl() {
         return profileImageUrl;
     }
 }

@@ -2,18 +2,24 @@ package com.matheesha.flixer;
 
 public class Similar {
     private String title;
-    private int poster;
+    private String posterUrl;
+    private int movieId;
 
-    public Similar(String title, int poster) {
+    public Similar(int movieId, String title, String posterUrl) {
+        this.movieId = movieId;
         this.title = title;
-        this.poster = poster;
+        this.posterUrl = posterUrl;
+    }
+
+    public int getMovieId() {
+        return movieId;
     }
 
     public String getTitle() {
         return title;
     }
 
-    public int getPoster() {
-        return poster;
+    public String getPosterUrl() {
+        return posterUrl;
     }
 }

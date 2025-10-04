@@ -11,6 +11,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.squareup.picasso.Picasso;
+
 public class CastAdapter extends RecyclerView.Adapter<CastViewHolder> {
     Context context;
     List<Cast> castList=new ArrayList<>();
@@ -35,8 +37,14 @@ public class CastAdapter extends RecyclerView.Adapter<CastViewHolder> {
         Cast cast = castList.get(position);
 
         holder.actor_name.setText(cast.getActorName());
-        holder.profile_image.setImageResource(cast.getProfileImageUrl());
         holder.character_name.setText(cast.getCharacterName());
+
+        String profileUrl = cast.getProfileImageUrl();
+        if (profileUrl == null || profileUrl.trim().isEmpty()) {
+            holder.profile_image.setImageResource(R.drawable.blank_pfp);
+        } else {
+            Picasso.get().load(profileUrl).placeholder(R.drawable.blank_pfp).into(holder.profile_image);
+        }
     }
 
     @Override
