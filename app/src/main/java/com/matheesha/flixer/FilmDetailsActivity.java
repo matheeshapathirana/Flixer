@@ -123,6 +123,7 @@ public class FilmDetailsActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     String url = moreInfoHomepageUrl;
                     if (url == null || url.trim().isEmpty()) {
+                        //https://developer.android.com/guide/topics/ui/notifiers/toasts
                         Toast.makeText(FilmDetailsActivity.this, "No homepage available", Toast.LENGTH_SHORT).show();
                         return;
                     }
