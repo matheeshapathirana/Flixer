@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="140dp"
         android:scaleType="centerCrop"
-        android:src="@drawable/placeholder_poster"
+        android:src="@drawable/loading"
         android:contentDescription="@string/similar_poster_content_description"
         android:layout_marginBottom="4dp"
         app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Flixer.RoundedPoster" />
