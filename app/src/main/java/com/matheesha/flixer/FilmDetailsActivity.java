@@ -307,7 +307,7 @@ public class FilmDetailsActivity extends AppCompatActivity {
             @Override
             public void onResponse(JSONObject response) {
                 try {
-                    String imdbFromExternal = response.getString("imdb_id");
+                    String imdbFromExternal = response.optString("imdb_id", "");
                     if (!imdbFromExternal.isEmpty() && imdb != null) {
                         fetchOmdbDetails(imdbFromExternal);
                     }
@@ -462,8 +462,8 @@ public class FilmDetailsActivity extends AppCompatActivity {
 
         if (posterPath == null || posterPath.trim().isEmpty() || "null".equalsIgnoreCase(posterPath.trim())) {
             poster.setImageResource(R.drawable.loading);
-        return;
-    }
+                return;
+        }
 
         String fullUrl = TMDB_Image_Base_URL + posterPath.trim();
         Picasso.get().load(fullUrl).placeholder(R.drawable.loading).into(poster);
