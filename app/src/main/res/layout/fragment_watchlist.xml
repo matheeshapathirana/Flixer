@@ -6,7 +6,7 @@
     android:orientation="vertical"
     tools:context=".WatchlistFragment">
 
-
+    <!-- REFERENCE: https://youtu.be/LXl7D57fgOQ?si=_pnYx58qgK4yUBUD -->
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/watchlist_tabLayout"
         android:layout_width="match_parent"
@@ -24,6 +24,7 @@
 
     </com.google.android.material.tabs.TabLayout>
 
+    <!-- REFERENCE: https://youtu.be/LXl7D57fgOQ?si=_pnYx58qgK4yUBUD -->
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/watchlist_viewPager"
         android:layout_width="match_parent"
