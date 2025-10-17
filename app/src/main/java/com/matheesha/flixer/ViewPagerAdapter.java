@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
+//REFERENCE: https://youtu.be/LXl7D57fgOQ?si=_pnYx58qgK4yUBUD
+
 public class ViewPagerAdapter extends FragmentStateAdapter {
 
     public ViewPagerAdapter(@NonNull WatchlistFragment fragmentActivity) {

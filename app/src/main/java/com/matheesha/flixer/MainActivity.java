@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        //REFERENCE: https://youtu.be/jOFLmKMOcK0?si=7n8Kh6Q9sm6TJgss
         //Change fragment when the user taps on the icon in the bottom nav
         binding.bottomNav.setOnItemSelectedListener(item -> {
             int itemID = item.getItemId();
@@ -51,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    //REFERENCE: https://youtu.be/jOFLmKMOcK0?si=7n8Kh6Q9sm6TJgss
     //Method to replace FrameLayout with the particular fragment
     private void replaceFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
