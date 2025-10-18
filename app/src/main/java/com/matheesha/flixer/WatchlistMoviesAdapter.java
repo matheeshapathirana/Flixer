@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
@@ -37,10 +38,20 @@ public class WatchlistMoviesAdapter extends RecyclerView.Adapter<WatchlistMovies
     public void onBindViewHolder(@NonNull WatchlistMoviesAdapter.MyViewHolder holder, int position) {
         holder.title.setText(moviesWatchlist.get(position).getTitle());
         holder.progressBar.setProgress(moviesWatchlist.get(position).getProgress());
+        holder.poster.setImageResource(moviesWatchlist.get(position).getPoster());
 
-        //TO DO: Set the status spinner
+        //REFERENCE: ChatGPT
+        ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
+                context,
+                R.array.watchlist_filters,
+                android.R.layout.simple_spinner_item
+        );
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        holder.statusSpinner.setAdapter(spinnerAdapter);
 
-        //TO DO: Set the poster
+        //Set current value
+        int spinnerPosition = spinnerAdapter.getPosition(moviesWatchlist.get(position).getStatus());
+        holder.statusSpinner.setSelection(spinnerPosition);
     }
 
     @Override

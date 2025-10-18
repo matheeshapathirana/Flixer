@@ -34,9 +34,9 @@ public class WatchlistMoviesFragment extends Fragment {
 
         setupMoviesWatchlist();
 
-        WatchlistMoviesAdapter adapter = new WatchlistMoviesAdapter(this, moviesWatchlist);
+        WatchlistMoviesAdapter adapter = new WatchlistMoviesAdapter(requireContext(), moviesWatchlist); //REFERENCE: ChatGPT
         rvMoviesWatchlist.setAdapter(adapter);
-        rvMoviesWatchlist.setLayoutManager(new LinearLayoutManager(this));
+        rvMoviesWatchlist.setLayoutManager(new LinearLayoutManager(requireContext()));    //REFERENCE: ChatGPT
     }
 
     private void setupMoviesWatchlist() {
