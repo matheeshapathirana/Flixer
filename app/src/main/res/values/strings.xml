@@ -2,4 +2,13 @@
     <string name="app_name">Flixer</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string-array name="watchlist_filters">
+        <item>All</item>
+        <item>Plan to Watch</item>
+        <item>Watching</item>
+        <item>Completed</item>
+        <item>On Hold</item>
+        <item>Dropped</item>
+    </string-array>
 </resources>
