@@ -41,7 +41,8 @@
             android:text="0 Entries"
             android:gravity="center_vertical"
             android:textSize="16sp"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:layout_marginLeft="10dp"/>
 
         <Spinner
             android:id="@+id/filterSpinner"
