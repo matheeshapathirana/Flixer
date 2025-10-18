@@ -45,6 +45,7 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.recyclerview)
     implementation(libs.viewpager2)
+    implementation(libs.firebase.firestore)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
