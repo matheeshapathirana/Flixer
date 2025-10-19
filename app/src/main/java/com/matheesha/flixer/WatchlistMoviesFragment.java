@@ -12,14 +12,22 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.concurrent.Executor;
 
 public class WatchlistMoviesFragment extends Fragment {
 
     ArrayList<WatchlistMovieModel> moviesWatchlist = new ArrayList<>();
+    WatchlistMoviesAdapter adapter;
 
+    //For removing the addSnapShotListner - REFERENCE: Gemini
+    private ListenerRegistration watchlistRegistration;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -36,7 +44,7 @@ public class WatchlistMoviesFragment extends Fragment {
 
         setupMoviesWatchlist();
 
-        WatchlistMoviesAdapter adapter = new WatchlistMoviesAdapter(requireContext(), moviesWatchlist); //REFERENCE: ChatGPT
+        adapter = new WatchlistMoviesAdapter(requireContext(), moviesWatchlist); //REFERENCE: ChatGPT
         rvMoviesWatchlist.setAdapter(adapter);
         rvMoviesWatchlist.setLayoutManager(new LinearLayoutManager(requireContext()));    //REFERENCE: ChatGPT
     }
@@ -45,37 +53,50 @@ public class WatchlistMoviesFragment extends Fragment {
     private void setupMoviesWatchlist() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        db.collection("users")
+        watchlistRegistration = db.collection("users")
                 .document("zxG3kkJH4WwOu4elGsCx")
                 .collection("watchlist_movies")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    moviesWatchlist.clear();
+                .addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException error) {
+                        moviesWatchlist.clear();
 
-                    for (var doc : queryDocumentSnapshots) {
-                        String title = doc.getString("title");
-                        String status = doc.getString("status");
-
-                        int progress = 0;
-                        if (status.equals("Completed")) {
-                            progress = 100;
+                        if (error != null) {
+                            error.printStackTrace();
+                            return;
                         }
 
-                        //Placeholder poster for now
-                        //TO DO: Connect with API and fetch the real poster
-                        int poster = R.drawable.loading;
+                        if (queryDocumentSnapshots == null) return;
 
-                        moviesWatchlist.add(new WatchlistMovieModel(poster, title, progress, status));
+                        queryDocumentSnapshots.forEach(doc -> {
+                            String title = doc.getString("title");
+                            String status = doc.getString("status");
 
-                        //Notify the adapter after data changes
-                        RecyclerView rv = requireView().findViewById(R.id.movies_watchlist_recyclerView);
-                        WatchlistMoviesAdapter adapter = (WatchlistMoviesAdapter) rv.getAdapter();
-                        if (adapter != null) {
-                            adapter.notifyDataSetChanged();
-                        }
+                            int progress = 0;
+                            if (status.equals("Completed")) {
+                                progress = 100;
+                            }
+
+                            //Placeholder poster for now
+                            //TO DO: Connect with API and fetch the real poster
+                            int poster = R.drawable.loading;
+
+                            moviesWatchlist.add(new WatchlistMovieModel(poster, title, progress, status));
+                        });
+
+                        adapter.notifyDataSetChanged();
                     }
-                }).addOnFailureListener(e -> {
-                    e.printStackTrace();
                 });
+    }
+
+    //REFERENCE: Gemini
+    //Manually removing the listener when the fragment is not in use
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (watchlistRegistration != null) {
+            watchlistRegistration.remove();
+        }
     }
 }
