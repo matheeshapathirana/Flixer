@@ -12,7 +12,7 @@
         <item>Dropped</item>
     </string-array>
 
-    <string-array name="watch_status">
+    <string-array name="watch_statuses">
         <item>Plan to Watch</item>
         <item>Watching</item>
         <item>Completed</item>

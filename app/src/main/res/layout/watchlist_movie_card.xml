@@ -60,6 +60,6 @@
             android:layout_height="wrap_content"
             android:layout_gravity="end"
             android:spinnerMode="dropdown"
-            android:entries="@array/watch_status" />
+            android:entries="@array/watch_statuses" />
     </LinearLayout>
 </LinearLayout>
