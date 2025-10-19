@@ -30,6 +30,7 @@ public class WatchlistMoviesFragment extends Fragment {
     }
 
     ArrayList<WatchlistMovieModel> moviesWatchlist = new ArrayList<>();
+    ArrayList<WatchlistMovieModel> filteredMovies = new ArrayList<>();
     WatchlistMoviesAdapter adapter;
     private OnItemCountChangeListener listener;
     private ListenerRegistration watchlistRegistration; //For removing the addSnapShotListner - REFERENCE: Gemini
@@ -54,7 +55,7 @@ public class WatchlistMoviesFragment extends Fragment {
 
         setupMoviesWatchlist();
 
-        adapter = new WatchlistMoviesAdapter(requireContext(), moviesWatchlist); //REFERENCE: ChatGPT
+        adapter = new WatchlistMoviesAdapter(requireContext(), filteredMovies); //REFERENCE: ChatGPT
         rvMoviesWatchlist.setAdapter(adapter);
         rvMoviesWatchlist.setLayoutManager(new LinearLayoutManager(requireContext()));    //REFERENCE: ChatGPT
     }
@@ -95,6 +96,8 @@ public class WatchlistMoviesFragment extends Fragment {
                             moviesWatchlist.add(new WatchlistMovieModel(poster, title, progress, status, docId));
                         });
 
+                        filteredMovies.clear();
+                        filteredMovies.addAll(moviesWatchlist);
                         adapter.notifyDataSetChanged();
 
                         //Notify the parent fragment about the item count
@@ -103,6 +106,28 @@ public class WatchlistMoviesFragment extends Fragment {
                         }
                     }
                 });
+    }
+
+    //REFERENCE: ChatGPT
+    //Filter by status logic
+    public void filterByStatus(String status) {
+        filteredMovies.clear();
+
+        if (status.equals("All")) {
+            filteredMovies.addAll(moviesWatchlist);
+        } else {
+            for (WatchlistMovieModel movie : moviesWatchlist) {
+                if (movie.getStatus().equals(status)) {
+                    filteredMovies.add(movie);
+                }
+            }
+        }
+
+        adapter.notifyDataSetChanged();
+
+        if (listener != null) {
+            listener.onItemCountChanged(filteredMovies.size());
+        }
     }
 
     //REFERENCE: Gemini
@@ -117,6 +142,6 @@ public class WatchlistMoviesFragment extends Fragment {
 
     //Method to get the entry count
     public int getItemCount() {
-        return moviesWatchlist.size();
+        return filteredMovies.size();
     }
 }
