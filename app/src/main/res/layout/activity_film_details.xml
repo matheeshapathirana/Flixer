@@ -173,8 +173,8 @@
             android:id="@+id/rv_cast"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:layout_marginBottom="24dp"
+            android:orientation="horizontal"
             tools:itemCount="5"
             tools:listitem="@layout/item_cast" />
 
@@ -190,14 +190,15 @@
                 android:id="@+id/btn_add_watchlist"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
+                android:onClick="add_to_firestore"
+                android:padding="12dp"
                 android:text="Add to Watchlist"
                 android:textColor="@color/button_text"
                 app:backgroundTint="@color/button_primary_background"
-                app:rippleColor="@color/button_ripple"
                 app:cornerRadius="24dp"
-                android:layout_marginEnd="8dp"
-                android:padding="12dp" />
+                app:rippleColor="@color/button_ripple" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/more_info"

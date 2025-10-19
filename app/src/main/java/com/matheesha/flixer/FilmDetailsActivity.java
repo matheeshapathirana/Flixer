@@ -25,6 +25,7 @@ import com.android.volley.toolbox.Volley;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -55,11 +56,16 @@ public class FilmDetailsActivity extends AppCompatActivity {
     private static String TAG_OMDB = "omdb";
     private final static String TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo";
     private final static String OMDB_API_KEY = "f9c8b034";
-    
+
+    // To hold IMDb id fetched from TMDB external ids
+    public String imdbFromExternal;
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+
     RequestQueue queue;
     TextView title, year, imdb, metascore, plot, duration, language;
     ImageView poster;
-    MaterialButton moreInfoButton;
+    MaterialButton moreInfoButton,addToWatchlistButton;
 
     private List<Cast> castData = new ArrayList<>();
     private CastAdapter castAdapter;
@@ -108,6 +114,8 @@ public class FilmDetailsActivity extends AppCompatActivity {
     language=findViewById(R.id.tv_language);
     poster=findViewById(R.id.iv_movie_poster);
     moreInfoButton = findViewById(R.id.more_info);
+    addToWatchlistButton = findViewById(R.id.btn_add_watchlist);
+
 
 //      https://developer.android.com/reference/androidx/core/view/ViewCompat
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.film_details_root), (v, insets) -> {
@@ -135,6 +143,35 @@ public class FilmDetailsActivity extends AppCompatActivity {
 
         setupCastRecycler();
         setupSimilarRecycler();
+
+        addToWatchlistButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String fire_title = title.getText().toString();
+                String DEFAULT_STATUS = "Plan to Watch";
+                String fire_date_added = java.time.LocalDate.now().toString();
+                String fire_time_added = java.time.LocalTime.now().withNano(0).toString();
+
+                Map<String, Object> movie = new HashMap<>();
+                movie.put("title", fire_title);
+                movie.put("status", DEFAULT_STATUS);
+                movie.put("date_added", fire_date_added);
+                movie.put("time_added", fire_time_added);
+
+                db.collection("users")
+                        .document("zxG3kkJH4WwOu4elGsCx") // Static user document ID for demonstration
+                        .collection("watchlist_movies")
+                        .document(imdbFromExternal)
+                        .set(movie)
+                        .addOnSuccessListener(documentReference -> {
+                            Toast.makeText(FilmDetailsActivity.this, "Added to Watchlist", Toast.LENGTH_SHORT).show();
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(FilmDetailsActivity.this, "Error adding to Watchlist", Toast.LENGTH_SHORT).show();
+                        });
+            }
+        });
+
         if (providedId != null && !providedId.trim().isEmpty()) {
             String trimmed = providedId.trim();
             if (trimmed.startsWith("tt")) {
@@ -461,7 +498,7 @@ public class FilmDetailsActivity extends AppCompatActivity {
             @Override
             public void onResponse(JSONObject response) {
                 try {
-                    String imdbFromExternal = response.optString("imdb_id", "");
+                    imdbFromExternal = response.optString("imdb_id", "");
                     if (!imdbFromExternal.isEmpty() && imdb != null) {
                         fetchOmdbDetails(imdbFromExternal);
                     }
