@@ -10,6 +10,8 @@ import androidx.viewpager2.widget.ViewPager2;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -20,6 +22,8 @@ public class WatchlistFragment extends Fragment {
     private TabLayout watchlist_tabLayout;
     private ViewPager2 watchlist_viewPager;
     private ViewPagerAdapter viewPagerAdapter;
+    private TextView entryCount;
+    private Spinner statusFilter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -35,6 +39,9 @@ public class WatchlistFragment extends Fragment {
 
         watchlist_tabLayout = view.findViewById(R.id.watchlist_tabLayout);
         watchlist_viewPager = view.findViewById(R.id.watchlist_viewPager);
+
+        entryCount = view.findViewById(R.id.entryCount);
+        statusFilter = view.findViewById(R.id.filterSpinner);
 
         viewPagerAdapter = new ViewPagerAdapter(this);
         watchlist_viewPager.setAdapter(viewPagerAdapter);
