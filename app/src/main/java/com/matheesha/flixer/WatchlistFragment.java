@@ -50,9 +50,36 @@ public class WatchlistFragment extends Fragment {
                 (tab, position) -> {
                     if (position == 0) {
                         tab.setText("Movies");
+
+                        //REFERENCE: ChatGPT - get the movie fragment and set the listener for entry count
+                        viewPagerAdapter.getMoviesFragment().setOnItemCountChangeListener(count -> {
+                            if (watchlist_viewPager.getCurrentItem() == 0) {
+                                entryCount.setText("Entries: " + count);
+                            }
+                        });
                     } else {
                         tab.setText("TV Series");
+
+//                        viewPagerAdapter.getSeriesFragment().setOnItemCountChangeListener(count -> {
+//                           if (watchlist_viewPager.getCurrentItem() == 1) {
+//                               entryCount.setText("Entries: " + count);
+//                        });
                     }
                 }).attach();
+
+        //REFERENCE: ChatGPT - update the entryCount when the user switches tabs
+        watchlist_viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+
+                if (position == 0) {
+                    entryCount.setText("Entries: " + viewPagerAdapter.getMoviesFragment().getItemCount());
+                } else {
+                    entryCount.setText("Entries: 0");
+                    //entryCount.setText("Entries: " + viewPagerAdapter.getSeriesFragment().getItemCount());
+                }
+            }
+        });
     }
 }

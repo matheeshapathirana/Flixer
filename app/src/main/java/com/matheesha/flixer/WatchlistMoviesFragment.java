@@ -23,11 +23,21 @@ import java.util.concurrent.Executor;
 
 public class WatchlistMoviesFragment extends Fragment {
 
+    //Interface to update the entry count in WatchlistFragment
+    //REFERENCE: ChatGPT
+    public interface OnItemCountChangeListener {
+        void onItemCountChanged(int count);
+    }
+
     ArrayList<WatchlistMovieModel> moviesWatchlist = new ArrayList<>();
     WatchlistMoviesAdapter adapter;
+    private OnItemCountChangeListener listener;
+    private ListenerRegistration watchlistRegistration; //For removing the addSnapShotListner - REFERENCE: Gemini
 
-    //For removing the addSnapShotListner - REFERENCE: Gemini
-    private ListenerRegistration watchlistRegistration;
+    //REFERENCE: ChatGPT
+    public void setOnItemCountChangeListener(OnItemCountChangeListener listener) {
+        this.listener = listener;
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -85,18 +95,27 @@ public class WatchlistMoviesFragment extends Fragment {
                         });
 
                         adapter.notifyDataSetChanged();
+
+                        //Notify the parent fragment about the item count
+                        if (listener != null) {
+                            listener.onItemCountChanged(moviesWatchlist.size());
+                        }
                     }
                 });
     }
 
     //REFERENCE: Gemini
     //Manually removing the listener when the fragment is not in use
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         if (watchlistRegistration != null) {
             watchlistRegistration.remove();
         }
+    }
+
+    //Method to get the entry count
+    public int getItemCount() {
+        return moviesWatchlist.size();
     }
 }
