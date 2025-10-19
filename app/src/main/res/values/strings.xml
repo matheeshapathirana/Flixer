@@ -11,4 +11,12 @@
         <item>On Hold</item>
         <item>Dropped</item>
     </string-array>
+
+    <string-array name="watch_status">
+        <item>Plan to Watch</item>
+        <item>Watching</item>
+        <item>Completed</item>
+        <item>On Hold</item>
+        <item>Dropped</item>
+    </string-array>
 </resources>

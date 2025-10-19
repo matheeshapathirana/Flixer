@@ -81,6 +81,7 @@ public class WatchlistMoviesFragment extends Fragment {
                         queryDocumentSnapshots.forEach(doc -> {
                             String title = doc.getString("title");
                             String status = doc.getString("status");
+                            String docId = doc.getId();
 
                             int progress = 0;
                             if (status.equals("Completed")) {
@@ -91,7 +92,7 @@ public class WatchlistMoviesFragment extends Fragment {
                             //TO DO: Connect with API and fetch the real poster
                             int poster = R.drawable.loading;
 
-                            moviesWatchlist.add(new WatchlistMovieModel(poster, title, progress, status));
+                            moviesWatchlist.add(new WatchlistMovieModel(poster, title, progress, status, docId));
                         });
 
                         adapter.notifyDataSetChanged();

@@ -4,14 +4,18 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 
@@ -52,6 +56,43 @@ public class WatchlistMoviesAdapter extends RecyclerView.Adapter<WatchlistMovies
         //Set current value
         int spinnerPosition = spinnerAdapter.getPosition(moviesWatchlist.get(position).getStatus());
         holder.statusSpinner.setSelection(spinnerPosition);
+
+        //REFERENCE - ChatGPT : Updating database on spinner value change
+        holder.statusSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            boolean firstCall = true; //flag to ignore the first callback
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if (firstCall) {
+                    firstCall = false;
+                    return;
+                }
+
+                String selectedStatus = adapterView.getItemAtPosition(i).toString();
+
+                //Update local model
+                moviesWatchlist.get(position).setStatus(selectedStatus);
+
+                //Update FireStore
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
+                db.collection("users")
+                        .document("zxG3kkJH4WwOu4elGsCx")
+                        .collection("watchlist_movies")
+                        .document(moviesWatchlist.get(position).getDocumentId())
+                        .update("status", selectedStatus)
+                        .addOnSuccessListener(success -> {
+                            Toast.makeText(context.getApplicationContext(), "Movie status updated successfully!", Toast.LENGTH_LONG).show();
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(context.getApplicationContext(), "Failed to update movie status!", Toast.LENGTH_LONG).show();
+                        });
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
     }
 
     @Override
