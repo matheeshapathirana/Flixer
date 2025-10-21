@@ -5,10 +5,9 @@
     android:layout_height="match_parent"
     tools:context=".WatchlistTvFragment">
 
-    <TextView
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/series_watchlist_recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="TV Series Watchlist"
-        android:textSize="30sp" />
+        android:layout_height="match_parent" />
 
 </FrameLayout>

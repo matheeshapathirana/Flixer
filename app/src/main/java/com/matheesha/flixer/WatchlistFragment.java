@@ -62,10 +62,11 @@ public class WatchlistFragment extends Fragment {
                     } else {
                         tab.setText("TV Series");
 
-//                        viewPagerAdapter.getSeriesFragment().setOnItemCountChangeListener(count -> {
-//                           if (watchlist_viewPager.getCurrentItem() == 1) {
-//                               entryCount.setText("Entries: " + count);
-//                        });
+                        viewPagerAdapter.getSeriesFragment().setOnItemCountChangeListener(count -> {
+                           if (watchlist_viewPager.getCurrentItem() == 1) {
+                               entryCount.setText("Entries: " + count);
+                           }
+                        });
                     }
                 }).attach();
 
@@ -79,7 +80,7 @@ public class WatchlistFragment extends Fragment {
                     entryCount.setText("Entries: " + viewPagerAdapter.getMoviesFragment().getItemCount());
                 } else {
                     entryCount.setText("Entries: 0");
-                    //entryCount.setText("Entries: " + viewPagerAdapter.getSeriesFragment().getItemCount());
+                    entryCount.setText("Entries: " + viewPagerAdapter.getSeriesFragment().getItemCount());
                 }
             }
         });
@@ -103,7 +104,7 @@ public class WatchlistFragment extends Fragment {
                 if (currentTab == 0) {
                     viewPagerAdapter.getMoviesFragment().filterByStatus(selectedStatus);
                 } else {
-                    //viewPagerAdapter.getSeriesFragment().filterByStatus(selectedStatus);
+                    viewPagerAdapter.getSeriesFragment().filterByStatus(selectedStatus);
                 }
             }
 
