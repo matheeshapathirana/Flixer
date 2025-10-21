@@ -60,4 +60,12 @@ public class WatchlistSeriesModel {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    public void setCurrentSeason(int currentSeason) {
+        this.currentSeason = currentSeason;
+    }
+
+    public void setCurrentEpisode(int currentEpisode) {
+        this.currentEpisode = currentEpisode;
+    }
 }

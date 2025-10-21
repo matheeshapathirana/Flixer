@@ -118,7 +118,7 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
         int tmdb_id = seriesWatchlist.get(position).getTmdb_id();
         String seriesURL = TMDB_SERIES_INFO_URL + tmdb_id;
 
-        //REFERENCE: ChatGPT
+        //REFERENCE: ChatGPT - with my own additions
         Runnable setupSpinners = () -> {
             try {
                 JSONObject response = seriesCache.get(tmdb_id);
@@ -151,6 +151,7 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                     @Override
                     public void onItemSelected(AdapterView<?> adapterView, View view, int seasonPosition, long l) {
                         int episodeCount = episodeCounts.get(seasonPosition);
+                        String selectedSeason = adapterView.getItemAtPosition(seasonPosition).toString();
 
                         ArrayList<Integer> episodes = new ArrayList<>();
 
@@ -165,6 +166,67 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                         );
                         episodeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
                         holder.episodeSpinner.setAdapter(episodeAdapter);
+
+                        int episodeSpinnerPosition = episodeAdapter.getPosition(seriesWatchlist.get(position).getCurrentEpisode());
+                        holder.episodeSpinner.setSelection(episodeSpinnerPosition);
+
+                        //--- NOT CHATGPT - Updating database on episode or season selections
+                        if (Integer.parseInt(selectedSeason) != seriesWatchlist.get(position).getCurrentSeason()) {
+                            //Update local model
+                            seriesWatchlist.get(position).setCurrentSeason(Integer.parseInt(selectedSeason));
+
+                            //Update FireStore
+                            FirebaseFirestore db = FirebaseFirestore.getInstance();
+                            db.collection("users")
+                                    .document("zxG3kkJH4WwOu4elGsCx")
+                                    .collection("watchlist_series")
+                                    .document(seriesWatchlist.get(position).getDocumentId())
+                                    .update("current_season", Integer.parseInt(selectedSeason))
+                                    .addOnSuccessListener(success -> {
+                                        Toast.makeText(context.getApplicationContext(), "Season update successful!", Toast.LENGTH_SHORT).show();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(context.getApplicationContext(), "Failed to update season.", Toast.LENGTH_SHORT).show();
+                                    });
+                        }
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> adapterView) {
+
+                    }
+                });
+                //END REFERENCE
+
+                //set the season and episode spinners to the current season and episode in the database
+                int seasonSpinnerPosition = seasonAdapter.getPosition(seriesWatchlist.get(position).getCurrentSeason());
+                holder.seasonSpinner.setSelection(seasonSpinnerPosition);
+
+                //Handling episode count updates
+                holder.episodeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                        String selectedEpisode = adapterView.getItemAtPosition(i).toString();
+
+                        //Only update Firestore if the value actually changed
+                        if (Integer.parseInt(selectedEpisode) != seriesWatchlist.get(position).getCurrentEpisode()) {
+                            //Update local model
+                            seriesWatchlist.get(position).setStatus(selectedEpisode);
+
+                            //Update FireStore
+                            FirebaseFirestore db = FirebaseFirestore.getInstance();
+                            db.collection("users")
+                                    .document("zxG3kkJH4WwOu4elGsCx")
+                                    .collection("watchlist_series")
+                                    .document(seriesWatchlist.get(position).getDocumentId())
+                                    .update("current_episode", Integer.parseInt(selectedEpisode))
+                                    .addOnSuccessListener(success -> {
+                                        Toast.makeText(context.getApplicationContext(), "Episode update successful!", Toast.LENGTH_SHORT).show();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(context.getApplicationContext(), "Episode update failed.", Toast.LENGTH_SHORT).show();
+                                    });
+                        }
                     }
 
                     @Override
