@@ -104,7 +104,7 @@ public class WatchlistMoviesFragment extends Fragment {
                             String docId = doc.getId();
 
                             int progress = 0;
-                            if (status.equals("Completed")) {
+                            if ("Completed".equals(doc.getString("status"))) {
                                 progress = 100;
                             }
 
