@@ -39,9 +39,6 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
     String TMDB_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo";
     String TMDB_SERIES_INFO_URL = "https://api.themoviedb.org/3/tv/";
 
-    //Hashmap to cache season no. and episode count
-    private final HashMap<Integer, JSONObject> seriesCache = new HashMap<>();
-
     public WatchlistSeriesAdapter(Context context, ArrayList<WatchlistSeriesModel> seriesWatchlist) {
         this.context = context;
         this.seriesWatchlist = seriesWatchlist;
@@ -58,11 +55,13 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
 
     @Override
     public void onBindViewHolder(@NonNull WatchlistSeriesAdapter.MyViewHolder holder, int position) {
-        holder.title.setText(seriesWatchlist.get(position).getTitle());
-        holder.progressBar.setProgress(seriesWatchlist.get(position).getProgress());
+        WatchlistSeriesModel series = seriesWatchlist.get(position);
+
+        holder.title.setText(series.getTitle());
+        holder.progressBar.setProgress(series.getProgress());
 
         //setting the image with Picasso
-        Picasso.get().load(seriesWatchlist.get(position).getPoster()).into(holder.poster);
+        Picasso.get().load(series.getPoster()).into(holder.poster);
 
         //TO DO: Create the season and episode spinners dynamically
 
@@ -121,7 +120,7 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
         //REFERENCE: ChatGPT - with my own additions
         Runnable setupSpinners = () -> {
             try {
-                JSONObject response = seriesCache.get(tmdb_id);
+                JSONObject response = SeriesCacheManager.getSeries(tmdb_id);
                 if (response == null)  return;
 
                 ArrayList<Integer> seasonNumbers = new ArrayList<>();
@@ -241,7 +240,7 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
         };
 
         //If cached, skip the network call
-        if (seriesCache.containsKey(tmdb_id)) {
+        if (SeriesCacheManager.contains(tmdb_id)) {
             setupSpinners.run();
         } else {
             RequestQueue queue = Volley.newRequestQueue(context);
@@ -251,7 +250,7 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                     null,
                     response -> {
                         //Cache it for next time
-                        seriesCache.put(tmdb_id, response);
+                        SeriesCacheManager.putSeries(tmdb_id, response);
                         setupSpinners.run();
                     },
                     volleyError -> {

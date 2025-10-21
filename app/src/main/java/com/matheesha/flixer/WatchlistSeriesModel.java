@@ -68,4 +68,8 @@ public class WatchlistSeriesModel {
     public void setCurrentEpisode(int currentEpisode) {
         this.currentEpisode = currentEpisode;
     }
+
+    public void setProgress(int progress) {
+        this.progress = progress;
+    }
 }
