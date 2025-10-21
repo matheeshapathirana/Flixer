@@ -100,13 +100,14 @@ public class WatchlistTvFragment extends Fragment {
                             String status = doc.getString("status");
                             int currentSeason = doc.getLong("current_season").intValue();
                             int currentEpisode = doc.getLong("current_episode").intValue();
+                            int tmdb_id = doc.getLong("tmdb_id").intValue();
                             String docId = doc.getId();
 
                             //Hardcoded value - replace with the calculation function
                             int progress = 50;
 
                             //Fetching and setting the movie poster
-                            WatchlistSeriesModel model = new WatchlistSeriesModel(null, title, progress, currentSeason, currentEpisode, status, docId);
+                            WatchlistSeriesModel model = new WatchlistSeriesModel(null, title, progress, currentSeason, currentEpisode, status, tmdb_id, docId);
                             seriesWatchlist.add(model);
 
                             //REFERENCE: ChatGPT - fetch the actual poster asynchronously

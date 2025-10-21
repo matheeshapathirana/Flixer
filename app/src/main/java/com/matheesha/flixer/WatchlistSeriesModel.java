@@ -7,15 +7,17 @@ public class WatchlistSeriesModel {
     private int currentSeason;
     private int currentEpisode;
     private String status;
+    private int tmdb_id;
     private String documentId;
 
-    public WatchlistSeriesModel(String poster, String title, int progress, int currentSeason, int currentEpisode, String status, String documentId) {
+    public WatchlistSeriesModel(String poster, String title, int progress, int currentSeason, int currentEpisode, String status, int tmdb_id, String documentId) {
         this.poster = poster;
         this.title = title;
         this.progress = progress;
         this.currentSeason = currentSeason;
         this.currentEpisode = currentEpisode;
         this.status = status;
+        this.tmdb_id = tmdb_id;
         this.documentId = documentId;
     }
 
@@ -41,6 +43,10 @@ public class WatchlistSeriesModel {
 
     public String getStatus() {
         return status;
+    }
+
+    public int getTmdb_id() {
+        return tmdb_id;
     }
 
     public String getDocumentId() {

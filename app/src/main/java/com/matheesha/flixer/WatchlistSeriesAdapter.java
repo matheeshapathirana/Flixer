@@ -16,14 +16,31 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeriesAdapter.MyViewHolder> {
     Context context;
     ArrayList<WatchlistSeriesModel> seriesWatchlist;
+
+    //Variables for network request
+    String TMDB_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo";
+    String TMDB_SERIES_INFO_URL = "https://api.themoviedb.org/3/tv/";
+
+    //Hashmap to cache season no. and episode count
+    private final HashMap<Integer, JSONObject> seriesCache = new HashMap<>();
 
     public WatchlistSeriesAdapter(Context context, ArrayList<WatchlistSeriesModel> seriesWatchlist) {
         this.context = context;
@@ -97,9 +114,99 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
             }
         });
 
-        //-------------- Season Spinner ---------------------
+        //-------------- Season and Episode Spinners --------------------
+        int tmdb_id = seriesWatchlist.get(position).getTmdb_id();
+        String seriesURL = TMDB_SERIES_INFO_URL + tmdb_id;
 
-        //-------------- Episode Spinner ---------------------
+        //REFERENCE: ChatGPT
+        Runnable setupSpinners = () -> {
+            try {
+                JSONObject response = seriesCache.get(tmdb_id);
+                if (response == null)  return;
+
+                ArrayList<Integer> seasonNumbers = new ArrayList<>();
+                ArrayList<Integer> episodeCounts = new ArrayList<>();
+
+                JSONArray seasonsArray = response.getJSONArray("seasons");
+
+                for (int i=1; i < seasonsArray.length(); i++) {
+                    JSONObject season = seasonsArray.getJSONObject(i);
+                    int seasonNumber = season.getInt("season_number");
+                    if (seasonNumber == 0) continue; //skip specials
+                    int episodeCount = season.getInt("episode_count");
+
+                    seasonNumbers.add(seasonNumber);
+                    episodeCounts.add(episodeCount);
+                }
+
+                ArrayAdapter<Integer> seasonAdapter = new ArrayAdapter<>(
+                        context,
+                        android.R.layout.simple_spinner_item,
+                        seasonNumbers
+                );
+                seasonAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                holder.seasonSpinner.setAdapter(seasonAdapter);
+
+                holder.seasonSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> adapterView, View view, int seasonPosition, long l) {
+                        int episodeCount = episodeCounts.get(seasonPosition);
+
+                        ArrayList<Integer> episodes = new ArrayList<>();
+
+                        for (int i = 1; i <= episodeCount; i++) {
+                            episodes.add(i);
+                        }
+
+                        ArrayAdapter<Integer> episodeAdapter = new ArrayAdapter<>(
+                                context,
+                                android.R.layout.simple_spinner_item,
+                                episodes
+                        );
+                        episodeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        holder.episodeSpinner.setAdapter(episodeAdapter);
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> adapterView) {
+
+                    }
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        };
+
+        //If cached, skip the network call
+        if (seriesCache.containsKey(tmdb_id)) {
+            setupSpinners.run();
+        } else {
+            RequestQueue queue = Volley.newRequestQueue(context);
+            JsonObjectRequest request = new JsonObjectRequest(
+                    Request.Method.GET,
+                    seriesURL,
+                    null,
+                    response -> {
+                        //Cache it for next time
+                        seriesCache.put(tmdb_id, response);
+                        setupSpinners.run();
+                    },
+                    volleyError -> {
+                        volleyError.printStackTrace();
+                        Toast.makeText(context, "Failed to load season information", Toast.LENGTH_SHORT).show();
+                    }
+            ) {
+                @Override
+                public Map<String, String> getHeaders() throws AuthFailureError {
+                    Map<String, String> headers = new HashMap<String, String>();
+                    headers.put("accept", "application/json");
+                    headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                    return headers;
+                }
+            };
+            queue.add(request);
+        }
 
         //-------------- Delete Button ----------------------
         holder.deleteBtn.setOnClickListener(new View.OnClickListener() {
