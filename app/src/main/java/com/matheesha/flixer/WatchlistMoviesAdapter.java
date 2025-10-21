@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
@@ -43,7 +44,9 @@ public class WatchlistMoviesAdapter extends RecyclerView.Adapter<WatchlistMovies
     public void onBindViewHolder(@NonNull WatchlistMoviesAdapter.MyViewHolder holder, int position) {
         holder.title.setText(moviesWatchlist.get(position).getTitle());
         holder.progressBar.setProgress(moviesWatchlist.get(position).getProgress());
-        holder.poster.setImageResource(moviesWatchlist.get(position).getPoster());
+
+        //set the image using Picasso
+        Picasso.get().load(moviesWatchlist.get(position).getPoster()).into(holder.poster);
 
         //REFERENCE: ChatGPT
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(

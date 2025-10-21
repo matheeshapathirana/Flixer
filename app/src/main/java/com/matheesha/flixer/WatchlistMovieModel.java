@@ -1,13 +1,13 @@
 package com.matheesha.flixer;
 
 public class WatchlistMovieModel {
-    private int poster;
+    private String poster;
     private String title;
     private int progress;
     private String status;
     private String documentId;
 
-    public WatchlistMovieModel(int poster, String title, int progress, String status, String documentId) {
+    public WatchlistMovieModel(String poster, String title, int progress, String status, String documentId) {
         this.poster = poster;
         this.title = title;
         this.progress = progress;
@@ -15,7 +15,7 @@ public class WatchlistMovieModel {
         this.documentId = documentId;
     }
 
-    public int getPoster() {
+    public String getPoster() {
         return poster;
     }
 
@@ -35,6 +35,9 @@ public class WatchlistMovieModel {
         return documentId;
     }
 
+    public void setPoster(String poster) {
+        this.poster = poster;
+    }
     public void setStatus(String selectedStatus) {
         this.status = selectedStatus;
     }
