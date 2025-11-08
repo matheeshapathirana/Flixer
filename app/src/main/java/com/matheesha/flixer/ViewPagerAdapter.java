@@ -19,7 +19,7 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
         //REFERENCE: ChatGPT
         //Initialize the fragments once
         moviesFragment = new WatchlistMoviesFragment();
-        seriesFragment = new WatchlistTvFragment();
+        seriesFragment = new WatchlistSeriesFragment();
     }
 
     //REFERENCE: https://youtu.be/LXl7D57fgOQ?si=_pnYx58qgK4yUBUD
@@ -46,7 +46,7 @@ public class ViewPagerAdapter extends FragmentStateAdapter {
         return (WatchlistMoviesFragment) moviesFragment;
     }
 
-    public WatchlistTvFragment getSeriesFragment() {
-        return (WatchlistTvFragment) seriesFragment;
+    public WatchlistSeriesFragment getSeriesFragment() {
+        return (WatchlistSeriesFragment) seriesFragment;
     }
 }

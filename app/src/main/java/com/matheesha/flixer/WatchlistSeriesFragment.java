@@ -34,7 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class WatchlistTvFragment extends Fragment {
+public class WatchlistSeriesFragment extends Fragment {
 
     //Interface to update the entry count in WatchlistFragment
     public interface OnItemCountChangeListener {
@@ -54,7 +54,7 @@ public class WatchlistTvFragment extends Fragment {
     public final String TMDB_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo";
     RequestQueue queue;
 
-    public void setOnItemCountChangeListener(WatchlistTvFragment.OnItemCountChangeListener listener) {
+    public void setOnItemCountChangeListener(WatchlistSeriesFragment.OnItemCountChangeListener listener) {
         this.listener = listener;
     }
 
@@ -119,7 +119,7 @@ public class WatchlistTvFragment extends Fragment {
                             seriesWatchlist.add(model);
 
                             //REFERENCE: ChatGPT - fetch the actual poster and progress asynchronously
-                            fetchSeriesPoster(doc.getId(), new WatchlistTvFragment.PosterFetchListener() {
+                            fetchSeriesPoster(doc.getId(), new WatchlistSeriesFragment.PosterFetchListener() {
                                 @Override
                                 public void onPosterFetched(String posterURL) {
                                     if (posterURL != null) {
