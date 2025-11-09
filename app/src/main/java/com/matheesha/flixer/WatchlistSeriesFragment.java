@@ -47,10 +47,6 @@ public class WatchlistSeriesFragment extends Fragment {
     WatchlistSeriesAdapter adapter;
     private OnItemCountChangeListener listener;
     private ListenerRegistration seriesRegistration;
-
-    //API Endpoints to fetch posters
-    public final String TV_SERIES_INFO_URL = "https://api.themoviedb.org/3/tv/";
-    public final String TMDB_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo";
     RequestQueue queue;
 
     public void setOnItemCountChangeListener(WatchlistSeriesFragment.OnItemCountChangeListener listener) {
@@ -103,22 +99,21 @@ public class WatchlistSeriesFragment extends Fragment {
                             int currentEpisode = doc.getLong("current_episode").intValue();
                             int tmdb_id = doc.getLong("tmdb_id").intValue();
                             String docId = doc.getId();
-                            int progress = calculateProgress(tmdb_id, currentSeason, currentEpisode);
+
+                            NetworkUtils networkUtils = new NetworkUtils(queue);
+                            int progress = 0;
+
+                            //Calculate progress if cache is available
+                            JSONObject seriesJSON = SeriesCacheManager.getSeries(tmdb_id);
+                            if (seriesJSON != null) {
+                                progress = networkUtils.calculateSeriesProgress(seriesJSON, currentSeason, currentEpisode);
+                            }
 
                             //Fetching and setting the movie poster
                             WatchlistSeriesModel model = new WatchlistSeriesModel(null, title, progress, currentSeason, currentEpisode, status, tmdb_id, docId);
-
-                            //Calculate and set progress early if cache is available
-                            JSONObject seriesJSON = SeriesCacheManager.getSeries(tmdb_id);
-                            if (seriesJSON != null) {
-                                int calculatedProgress = calculateProgress(tmdb_id, currentSeason, currentEpisode);
-                                model.setProgress(calculatedProgress);
-                            }
-
                             seriesWatchlist.add(model);
 
                             //REFERENCE: ChatGPT - fetch the actual poster and progress asynchronously
-                            NetworkUtils networkUtils = new NetworkUtils(queue);
                             networkUtils.fetchPosterByIMDB(doc.getId(), false, new NetworkUtils.PosterFetchListener() {
                                 @Override
                                 public void onPosterFetched(String posterURL) {
@@ -128,54 +123,13 @@ public class WatchlistSeriesFragment extends Fragment {
 
                                     //If progress wasn't calculated because of a missing cache, calculate it after fetching
                                     if (!SeriesCacheManager.contains(tmdb_id)) {
-                                        String seriesURL = TV_SERIES_INFO_URL + tmdb_id;
-                                        JsonObjectRequest request = new JsonObjectRequest(
-                                                Request.Method.GET,
-                                                seriesURL,
-                                                null,
-                                                response -> {
-                                                    SeriesCacheManager.putSeries(tmdb_id, response);
-                                                    int updatedProgress = calculateProgress(tmdb_id, currentSeason, currentEpisode);
-                                                    model.setProgress(updatedProgress);
-
-                                                    int position = -1;
-                                                    for (int i=0; i<filteredSeries.size(); i++) {
-                                                        if (filteredSeries.get(i).getDocumentId().equals(docId)) {
-                                                            position = i;
-                                                            break;
-                                                        }
-                                                    }
-
-                                                    if (position != -1) {
-                                                        adapter.notifyItemChanged(position);
-                                                    }
-                                                },
-                                                error -> {
-                                                    error.printStackTrace();
-                                                }
-                                        ) {
+                                        networkUtils.fetchSeriesInfoWithProgress(tmdb_id, currentSeason, currentEpisode, new NetworkUtils.SeriesProgressListener() {
                                             @Override
-                                            public Map<String, String> getHeaders() throws AuthFailureError {
-                                                Map<String, String> headers = new HashMap<>();
-                                                headers.put("accept", "application/json");
-                                                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
-                                                return headers;
+                                            public void onSeriesProgressCalculated(int progress, JSONObject series) {
+                                                model.setProgress(progress);
+                                                notifyItemChanged(docId); //DeepSeek: Update specific item
                                             }
-                                        };
-
-                                        queue.add(request);
-                                    } else {
-                                        int position = -1;
-                                        for (int i=0; i<filteredSeries.size(); i++) {
-                                            if (filteredSeries.get(i).getDocumentId().equals(docId)) {
-                                                position = i;
-                                                break;
-                                            }
-                                        }
-
-                                        if (position != -1) {
-                                            adapter.notifyItemChanged(position);
-                                        }
+                                        });
                                     }
                                 }
                             });
@@ -191,6 +145,20 @@ public class WatchlistSeriesFragment extends Fragment {
                         }
                     }
                 });
+    }
+
+    public void notifyItemChanged(String documentId) {
+        int position = -1;
+        for (int i=0; i<filteredSeries.size(); i++) {
+            if (filteredSeries.get(i).getDocumentId().equals(documentId)) {
+                position = i;
+                break;
+            }
+        }
+
+        if (position != -1) {
+            adapter.notifyItemChanged(position);
+        }
     }
 
     //Filter by logic
@@ -227,40 +195,4 @@ public class WatchlistSeriesFragment extends Fragment {
         return filteredSeries.size();
     }
 
-    public interface PosterFetchListener {
-        void onPosterFetched(String posterURL);
-    }
-
-    //Method to calculate series progress
-    private int calculateProgress(int tmdbId, int currentSeason, int currentEpisode) {
-        JSONObject series = SeriesCacheManager.getSeries(tmdbId);
-
-        if (series == null) {
-            return 0;
-        }
-
-        try {
-            JSONArray seasons = series.getJSONArray("seasons");
-            int totalEpisodes = 0;
-            int totalWatched = 0;
-
-            for (int i=1; i<seasons.length(); i++) {
-                JSONObject season = seasons.getJSONObject(i);
-                if (season.getInt("season_number") == 0) continue; //skip specials
-
-                if (season.getInt("season_number") < currentSeason) {
-                    totalWatched += season.getInt("episode_count");
-                }
-
-                totalEpisodes += season.getInt("episode_count");
-            }
-
-            totalWatched += currentEpisode;
-
-            return (int)(((double) totalWatched / totalEpisodes) * 100);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return 0;
-        }
-    }
 }
