@@ -24,6 +24,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.matheesha.flixer.utilities.NetworkUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -48,8 +49,6 @@ public class WatchlistSeriesFragment extends Fragment {
     private ListenerRegistration seriesRegistration;
 
     //API Endpoints to fetch posters
-    public final String FIND_BY_ID_URL = "https://api.themoviedb.org/3/find/";
-    public final String TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/original";
     public final String TV_SERIES_INFO_URL = "https://api.themoviedb.org/3/tv/";
     public final String TMDB_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo";
     RequestQueue queue;
@@ -119,7 +118,8 @@ public class WatchlistSeriesFragment extends Fragment {
                             seriesWatchlist.add(model);
 
                             //REFERENCE: ChatGPT - fetch the actual poster and progress asynchronously
-                            fetchSeriesPoster(doc.getId(), new WatchlistSeriesFragment.PosterFetchListener() {
+                            NetworkUtils networkUtils = new NetworkUtils(queue);
+                            networkUtils.fetchPosterByIMDB(doc.getId(), false, new NetworkUtils.PosterFetchListener() {
                                 @Override
                                 public void onPosterFetched(String posterURL) {
                                     if (posterURL != null) {
@@ -229,45 +229,6 @@ public class WatchlistSeriesFragment extends Fragment {
 
     public interface PosterFetchListener {
         void onPosterFetched(String posterURL);
-    }
-    public void fetchSeriesPoster(String imdbID, PosterFetchListener callback) {
-        String singleSeriesEndpoint = FIND_BY_ID_URL + imdbID + "?external_source=imdb_id";
-        JsonObjectRequest seriesRequest =
-                new JsonObjectRequest(Request.Method.GET, singleSeriesEndpoint, null,
-                        new Response.Listener<JSONObject>() {
-                            @Override
-                            public void onResponse(JSONObject response) {
-                                try {
-                                    if (response.has("tv_results")) {
-                                        JSONObject series = response.getJSONArray("tv_results").getJSONObject(0);
-                                        String posterPath = series.getString("poster_path");
-                                        String fullPosterURL = TMDB_IMAGE_URL + posterPath;
-                                        callback.onPosterFetched(fullPosterURL);
-                                    } else {
-                                        callback.onPosterFetched(null);
-                                    }
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                    callback.onPosterFetched(null);
-                                }
-                            }
-                        }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError volleyError) {
-                        String error = volleyError.toString();
-                        System.out.println(error);
-                    }
-                }) {
-                    @Override
-                    public Map<String, String> getHeaders() throws AuthFailureError {
-                        Map<String, String> headers = new HashMap<String, String>();
-                        headers.put("accept", "application/json");
-                        headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
-                        return headers;
-                    }
-                };
-
-        queue.add(seriesRequest);
     }
 
     //Method to calculate series progress

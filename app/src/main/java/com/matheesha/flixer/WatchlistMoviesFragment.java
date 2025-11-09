@@ -99,7 +99,7 @@ public class WatchlistMoviesFragment extends Fragment {
 
                             //REFERENCE: ChatGPT - fetch the actual poster asynchronously
                             NetworkUtils networkUtils = new NetworkUtils(queue);
-                            networkUtils.fetchPosterByIMDB(doc.getId(), new PosterFetchListener() {
+                            networkUtils.fetchPosterByIMDB(doc.getId(), true, new NetworkUtils.PosterFetchListener() {
                                 @Override
                                 public void onPosterFetched(String posterURL) {
                                     if (posterURL != null) {
@@ -159,8 +159,4 @@ public class WatchlistMoviesFragment extends Fragment {
         return filteredMovies.size();
     }
 
-    //REFERENCE: ChatGPT
-    public interface PosterFetchListener {
-        void onPosterFetched(String posterURL);
-    }
 }
