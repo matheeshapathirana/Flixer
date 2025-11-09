@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.matheesha.flixer.utilities.DatabaseUtils;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -25,10 +26,12 @@ public class WatchlistMoviesAdapter extends RecyclerView.Adapter<WatchlistMovies
 
     Context context;
     ArrayList<WatchlistMovieModel> moviesWatchlist;
+    private DatabaseUtils databaseUtils;
 
-    public WatchlistMoviesAdapter(Context context, ArrayList<WatchlistMovieModel> moviesWatchlist) {
+    public WatchlistMoviesAdapter(Context context, ArrayList<WatchlistMovieModel> moviesWatchlist, DatabaseUtils databaseUtils) {
         this.context = context;
         this.moviesWatchlist = moviesWatchlist;
+        this.databaseUtils = databaseUtils;
     }
 
     @NonNull
@@ -76,17 +79,18 @@ public class WatchlistMoviesAdapter extends RecyclerView.Adapter<WatchlistMovies
                     moviesWatchlist.get(position).setStatus(selectedStatus);
 
                     //Update FireStore
-                    FirebaseFirestore db = FirebaseFirestore.getInstance();
-                    db.collection("users")
-                            .document("zxG3kkJH4WwOu4elGsCx")
-                            .collection("watchlist_movies")
-                            .document(moviesWatchlist.get(position).getDocumentId())
-                            .update("status", selectedStatus)
-                            .addOnSuccessListener(success -> {
-                                Toast.makeText(context.getApplicationContext(), "Movie status updated successfully!", Toast.LENGTH_LONG).show();
-                            })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(context.getApplicationContext(), "Failed to update movie status!", Toast.LENGTH_LONG).show();
+                    databaseUtils.updateStatus(true, moviesWatchlist.get(position).getDocumentId(), selectedStatus,
+                            new DatabaseUtils.UpdateStatusListener() {
+                                @Override
+                                public void onUpdateSuccess() {
+                                    Toast.makeText(context, "Movie status updated successfully!", Toast.LENGTH_LONG).show();
+                                }
+
+                                @Override
+                                public void onUpdateFailure(Exception error) {
+                                    Toast.makeText(context, "Failed to update movie status!", Toast.LENGTH_LONG).show();
+                                    error.printStackTrace();
+                                }
                             });
                 }
 
@@ -111,18 +115,17 @@ public class WatchlistMoviesAdapter extends RecyclerView.Adapter<WatchlistMovies
                         .setTitle("Remove from Watchlist")
                         .setMessage("Are you sure you want to remove " + movie.getTitle() + " from your watchlist?")
                         .setPositiveButton("Yes", (dialog, which) -> {
-                            FirebaseFirestore db = FirebaseFirestore.getInstance();
-                            db.collection("users")
-                                    .document("zxG3kkJH4WwOu4elGsCx")
-                                    .collection("watchlist_movies")
-                                    .document(movie.getDocumentId())
-                                    .delete()
-                                    .addOnSuccessListener(success -> {
-                                        Toast.makeText(context.getApplicationContext(), "Removed from watchlist!", Toast.LENGTH_LONG).show();
-                                    })
-                                    .addOnFailureListener(error -> {
-                                        Toast.makeText(context.getApplicationContext(), "Failed to remove from watchlist!", Toast.LENGTH_LONG).show();
-                                    });
+                            databaseUtils.deleteFromWatchlist(true, movie.getDocumentId(), new DatabaseUtils.DeleteListener() {
+                                @Override
+                                public void onDeleteSuccess() {
+                                    Toast.makeText(context, "Removed from wishlist!", Toast.LENGTH_LONG).show();
+                                }
+
+                                @Override
+                                public void onDeleteFailure(Exception error) {
+                                    Toast.makeText(context, "Failed to remove from watchlist!", Toast.LENGTH_LONG).show();
+                                }
+                            });
                         })
                         .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                         .show();

@@ -62,7 +62,7 @@ public class WatchlistMoviesFragment extends Fragment implements DatabaseUtils.W
 
         setupMoviesWatchlist();
 
-        adapter = new WatchlistMoviesAdapter(requireContext(), filteredMovies); //REFERENCE: ChatGPT
+        adapter = new WatchlistMoviesAdapter(requireContext(), filteredMovies, databaseUtils); //REFERENCE: ChatGPT
         rvMoviesWatchlist.setAdapter(adapter);
         rvMoviesWatchlist.setLayoutManager(new LinearLayoutManager(requireContext()));    //REFERENCE: ChatGPT
     }
