@@ -19,11 +19,12 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.matheesha.flixer.utilities.DatabaseUtils;
 import com.matheesha.flixer.utilities.NetworkUtils;
 
 import java.util.ArrayList;
 
-public class WatchlistMoviesFragment extends Fragment {
+public class WatchlistMoviesFragment extends Fragment implements DatabaseUtils.WatchlistListener {
 
     //Interface to update the entry count in WatchlistFragment
     //REFERENCE: ChatGPT
@@ -37,6 +38,7 @@ public class WatchlistMoviesFragment extends Fragment {
     private OnItemCountChangeListener listener;
     private ListenerRegistration watchlistRegistration; //For removing the addSnapShotListner - REFERENCE: Gemini
     RequestQueue queue;
+    DatabaseUtils databaseUtils;
 
     //REFERENCE: ChatGPT
     public void setOnItemCountChangeListener(OnItemCountChangeListener listener) {
@@ -56,6 +58,7 @@ public class WatchlistMoviesFragment extends Fragment {
 
         RecyclerView rvMoviesWatchlist = view.findViewById(R.id.movies_watchlist_recyclerView);
         queue = Volley.newRequestQueue(requireContext());
+        databaseUtils = DatabaseUtils.getInstance(); //REFERENCE: Deepseek
 
         setupMoviesWatchlist();
 
@@ -66,60 +69,55 @@ public class WatchlistMoviesFragment extends Fragment {
 
     //REFERENCE: ChatGPT
     private void setupMoviesWatchlist() {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        watchlistRegistration = databaseUtils.setupWatchlistListener(true, this);
+    }
 
-        watchlistRegistration = db.collection("users")
-                .document("zxG3kkJH4WwOu4elGsCx")
-                .collection("watchlist_movies")
-                .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                    @Override
-                    public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException error) {
-                        moviesWatchlist.clear();
+    @Override
+    public void onWatchlistUpdate(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException error) {
+        moviesWatchlist.clear();
 
-                        if (error != null) {
-                            error.printStackTrace();
-                            return;
-                        }
+        if (error != null) {
+            error.printStackTrace();
+            return;
+        }
 
-                        if (queryDocumentSnapshots == null) return;
+        if (queryDocumentSnapshots == null) return;
 
-                        queryDocumentSnapshots.forEach(doc -> {
-                            String title = doc.getString("title");
-                            String status = doc.getString("status");
-                            String docId = doc.getId();
+        queryDocumentSnapshots.forEach(doc -> {
+            String title = doc.getString("title");
+            String status = doc.getString("status");
+            String docId = doc.getId();
 
-                            int progress = 0;
-                            if ("Completed".equals(doc.getString("status"))) {
-                                progress = 100;
-                            }
+            int progress = 0;
+            if ("Completed".equals(doc.getString("status"))) {
+                progress = 100;
+            }
 
-                            //Fetching and setting the movie poster
-                            WatchlistMovieModel model = new WatchlistMovieModel(null, title, progress, status, docId);
-                            moviesWatchlist.add(model);
+            //Fetching and setting the movie poster
+            WatchlistMovieModel model = new WatchlistMovieModel(null, title, progress, status, docId);
+            moviesWatchlist.add(model);
 
-                            //REFERENCE: ChatGPT - fetch the actual poster asynchronously
-                            NetworkUtils networkUtils = new NetworkUtils(queue);
-                            networkUtils.fetchPosterByIMDB(doc.getId(), true, new NetworkUtils.PosterFetchListener() {
-                                @Override
-                                public void onPosterFetched(String posterURL) {
-                                    if (posterURL != null) {
-                                        model.setPoster(posterURL);
-                                        adapter.notifyDataSetChanged(); //Refresh when poster loads
-                                    }
-                                }
-                            });
-                        });
-
-                        filteredMovies.clear();
-                        filteredMovies.addAll(moviesWatchlist);
-                        adapter.notifyDataSetChanged();
-
-                        //Notify the parent fragment about the item count
-                        if (listener != null) {
-                            listener.onItemCountChanged(moviesWatchlist.size());
-                        }
+            //REFERENCE: ChatGPT - fetch the actual poster asynchronously
+            NetworkUtils networkUtils = new NetworkUtils(queue);
+            networkUtils.fetchPosterByIMDB(doc.getId(), true, new NetworkUtils.PosterFetchListener() {
+                @Override
+                public void onPosterFetched(String posterURL) {
+                    if (posterURL != null) {
+                        model.setPoster(posterURL);
+                        adapter.notifyDataSetChanged(); //Refresh when poster loads
                     }
-                });
+                }
+            });
+        });
+
+        filteredMovies.clear();
+        filteredMovies.addAll(moviesWatchlist);
+        adapter.notifyDataSetChanged();
+
+        //Notify the parent fragment about the item count
+        if (listener != null) {
+            listener.onItemCountChanged(moviesWatchlist.size());
+        }
     }
 
     //REFERENCE: ChatGPT
