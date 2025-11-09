@@ -6,7 +6,9 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.matheesha.flixer.SeriesCacheManager;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -27,6 +29,14 @@ public class NetworkUtils {
     //REFERENCE: ChatGPT
     public interface PosterFetchListener {
         void onPosterFetched(String posterURL);
+    }
+
+    public interface SeriesInfoListener {
+        void onSeriesInfoFetched(JSONObject seriesInfo);
+    }
+
+    public interface SeriesProgressListener {
+        void onSeriesProgressCalculated(int progress, JSONObject series);
     }
 
     public void fetchPosterByIMDB(String imdbID, boolean isMovie, PosterFetchListener callback) {
@@ -70,6 +80,76 @@ public class NetworkUtils {
                 };
 
         queue.add(posterRequest);
+    }
+
+    //Fetching raw data for spinner setup
+    public void fetchSeriesInfoByTMDB(int tmdbID, SeriesInfoListener callback) {
+        String seriesURL = TV_SERIES_INFO_URL + tmdbID;
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                seriesURL,
+                null,
+                response -> {
+                    //cache the response when fetching it
+                    SeriesCacheManager.putSeries(tmdbID, response);
+                    callback.onSeriesInfoFetched(response);
+                },
+                error -> {
+                    error.printStackTrace();
+                    callback.onSeriesInfoFetched(null);
+                }
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+
+        queue.add(request);
+    }
+
+    //Fetch series info AND calculate progress - needed for fragment
+    public void fetchSeriesInfoWithProgress(int tmdbID, int currentSeason, int currentEpisode, SeriesProgressListener callback) {
+        fetchSeriesInfoByTMDB(tmdbID, new SeriesInfoListener() {
+            @Override
+            public void onSeriesInfoFetched(JSONObject seriesInfo) {
+                int progress = calculateSeriesProgress(seriesInfo, currentSeason, currentEpisode);
+                callback.onSeriesProgressCalculated(progress, seriesInfo);
+            }
+        });
+    }
+
+    public int calculateSeriesProgress(JSONObject series, int currentSeason, int currentEpisode) {
+        if (series == null) {
+            return 0;
+        }
+
+        try {
+            JSONArray seasons = series.getJSONArray("seasons");
+            int totalEpisodes = 0;
+            int totalWatched = 0;
+
+            for (int i=0; i<seasons.length(); i++) {
+                JSONObject season = seasons.getJSONObject(i);
+                if (season.getInt("season_number") == 0) continue; //skip specials
+
+                if (season.getInt("season_number") < currentSeason) {
+                    totalWatched += season.getInt("episode_count");
+                }
+
+                totalEpisodes += season.getInt("episode_count");
+            }
+
+            totalWatched += currentEpisode;
+
+            return (int)(((double)totalWatched / totalEpisodes) * 100);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
     }
 
 }
