@@ -1,6 +1,7 @@
 package com.matheesha.flixer;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +18,10 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.matheesha.flixer.utilities.DatabaseUtils;
+import com.matheesha.flixer.utilities.MediaCacheManager;
 import com.matheesha.flixer.utilities.NetworkUtils;
+
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 
@@ -85,26 +89,42 @@ public class WatchlistMoviesFragment extends Fragment implements DatabaseUtils.W
             String status = doc.getString("status");
             String docId = doc.getId();
 
+            Long tmdbNumber = doc.getLong("tmdb_id");
+            int tmdb_id = tmdbNumber.intValue();
+
             int progress = 0;
             if ("Completed".equals(doc.getString("status"))) {
                 progress = 100;
             }
 
+            NetworkUtils networkUtils = new NetworkUtils(queue);
+            String posterURL = null;
+
+            //Check movie cache first
+            JSONObject movieJSON = MediaCacheManager.getMovie(tmdb_id);
+            if (movieJSON != null) {
+                posterURL = networkUtils.extractMoviePosterURL(movieJSON);
+            }
+
             //Fetching and setting the movie poster
-            WatchlistMovieModel model = new WatchlistMovieModel(null, title, progress, status, docId);
+            WatchlistMovieModel model = new WatchlistMovieModel(posterURL, title, progress, status, tmdb_id, docId);
             moviesWatchlist.add(model);
 
             //REFERENCE: ChatGPT - fetch the actual poster asynchronously
-            NetworkUtils networkUtils = new NetworkUtils(queue);
-            networkUtils.fetchPosterByIMDB(doc.getId(), true, new NetworkUtils.PosterFetchListener() {
-                @Override
-                public void onPosterFetched(String posterURL) {
-                    if (posterURL != null) {
-                        model.setPoster(posterURL);
-                        adapter.notifyDataSetChanged(); //Refresh when poster loads
+            if (movieJSON == null) {
+                networkUtils.fetchMovieInfoByTMDB(tmdb_id, new NetworkUtils.MovieInfoListener() {
+                    @Override
+                    public void onMovieInfoFetched(JSONObject movieInfo) {
+                        if (movieInfo != null) {
+                            String posterURL = networkUtils.extractMoviePosterURL(movieInfo);
+                            if (posterURL != null) {
+                                model.setPoster(posterURL);
+                                adapter.notifyDataSetChanged();
+                            }
+                        }
                     }
-                }
-            });
+                });
+            }
         });
 
         filteredMovies.clear();

@@ -6,7 +6,6 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.matheesha.flixer.SeriesCacheManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -16,19 +15,26 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class NetworkUtils {
-    public static final String FIND_BY_ID_URL = "https://api.themoviedb.org/3/find/";
-    public static final String TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/original";
-    public static final String TV_SERIES_INFO_URL = "https://api.themoviedb.org/3/tv/";
-    public static final String TMDB_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo";
+    private static final String FIND_BY_ID_URL = "https://api.themoviedb.org/3/find/";
+    private static final String TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/original";
+    private static final String TV_SERIES_INFO_URL = "https://api.themoviedb.org/3/tv/";
+    private static final String MOVIE_INFO_URL = "https://api.themoviedb.org/3/movie/";
+    private static final String TMDB_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo";
     RequestQueue queue;
 
     public NetworkUtils(RequestQueue queue) {
         this.queue = queue;
     }
 
+    /*
     //REFERENCE: ChatGPT
     public interface PosterFetchListener {
         void onPosterFetched(String posterURL);
+    }
+    */
+
+    public interface MovieInfoListener {
+        void onMovieInfoFetched(JSONObject movieInfo);
     }
 
     public interface SeriesInfoListener {
@@ -39,6 +45,7 @@ public class NetworkUtils {
         void onSeriesProgressCalculated(int progress, JSONObject series);
     }
 
+    /*
     public void fetchPosterByIMDB(String imdbID, boolean isMovie, PosterFetchListener callback) {
         String endpoint = FIND_BY_ID_URL + imdbID + "?external_source=imdb_id";
         String resultArrayName = isMovie ? "movie_results" : "tv_results";
@@ -81,6 +88,48 @@ public class NetworkUtils {
 
         queue.add(posterRequest);
     }
+    */
+
+    public void fetchMovieInfoByTMDB(int tmdbID, MovieInfoListener callback) {
+        String movieURL = MOVIE_INFO_URL + tmdbID;
+
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET, movieURL, null,
+                response -> {
+                    //Cache movie details
+                    MediaCacheManager.putMovie(tmdbID, response);
+                    callback.onMovieInfoFetched(response);
+                },
+                error -> {
+                    error.printStackTrace();
+                    callback.onMovieInfoFetched(null);
+                }
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+
+        queue.add(request);
+    }
+
+    //Extracts poster URL from movie JSON
+    public String extractMoviePosterURL (JSONObject movieDetails) {
+        try {
+            if (movieDetails != null && movieDetails.has("poster_path")) {
+                String posterPath = movieDetails.getString("poster_path");
+                return TMDB_IMAGE_URL + posterPath;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 
     //Fetching raw data for spinner setup
     public void fetchSeriesInfoByTMDB(int tmdbID, SeriesInfoListener callback) {
@@ -91,7 +140,7 @@ public class NetworkUtils {
                 null,
                 response -> {
                     //cache the response when fetching it
-                    SeriesCacheManager.putSeries(tmdbID, response);
+                    MediaCacheManager.putSeries(tmdbID, response);
                     callback.onSeriesInfoFetched(response);
                 },
                 error -> {

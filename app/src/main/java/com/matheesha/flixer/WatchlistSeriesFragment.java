@@ -19,6 +19,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.matheesha.flixer.utilities.DatabaseUtils;
 import com.matheesha.flixer.utilities.NetworkUtils;
+import com.matheesha.flixer.utilities.MediaCacheManager;
 
 import org.json.JSONObject;
 
@@ -86,44 +87,48 @@ public class WatchlistSeriesFragment extends Fragment implements DatabaseUtils.W
         queryDocumentSnapshots.forEach(doc -> {
             String title = doc.getString("title");
             String status = doc.getString("status");
-            int currentSeason = doc.getLong("current_season").intValue();
-            int currentEpisode = doc.getLong("current_episode").intValue();
-            int tmdb_id = doc.getLong("tmdb_id").intValue();
             String docId = doc.getId();
+
+            Long currentSeasonNumber = doc.getLong("current_season");
+            int currentSeason = (currentSeasonNumber != null) ? currentSeasonNumber.intValue() : 0;
+
+            Long currentEpisodeNumber = doc.getLong("current_episode");
+            int currentEpisode = (currentEpisodeNumber != null) ? currentEpisodeNumber.intValue() : 0;
+
+            Long tmdbNumber = doc.getLong("tmdb_id");
+            int tmdb_id = tmdbNumber.intValue();
+
 
             NetworkUtils networkUtils = new NetworkUtils(queue);
             int progress = 0;
+            String posterURL = null;
 
             //Calculate progress if cache is available
-            JSONObject seriesJSON = SeriesCacheManager.getSeries(tmdb_id);
+            JSONObject seriesJSON = MediaCacheManager.getSeries(tmdb_id);
             if (seriesJSON != null) {
+                posterURL = networkUtils.extractMoviePosterURL(seriesJSON);
                 progress = networkUtils.calculateSeriesProgress(seriesJSON, currentSeason, currentEpisode);
             }
 
             //Fetching and setting the movie poster
-            WatchlistSeriesModel model = new WatchlistSeriesModel(null, title, progress, currentSeason, currentEpisode, status, tmdb_id, docId);
+            WatchlistSeriesModel model = new WatchlistSeriesModel(posterURL, title, progress, currentSeason, currentEpisode, status, tmdb_id, docId);
             seriesWatchlist.add(model);
 
             //REFERENCE: ChatGPT - fetch the actual poster and progress asynchronously
-            networkUtils.fetchPosterByIMDB(doc.getId(), false, new NetworkUtils.PosterFetchListener() {
-                @Override
-                public void onPosterFetched(String posterURL) {
-                    if (posterURL != null) {
-                        model.setPoster(posterURL);
-                    }
-
-                    //If progress wasn't calculated because of a missing cache, calculate it after fetching
-                    if (!SeriesCacheManager.contains(tmdb_id)) {
-                        networkUtils.fetchSeriesInfoWithProgress(tmdb_id, currentSeason, currentEpisode, new NetworkUtils.SeriesProgressListener() {
+            if (seriesJSON == null) {
+                networkUtils.fetchSeriesInfoWithProgress(tmdb_id, currentSeason, currentEpisode,
+                        new NetworkUtils.SeriesProgressListener() {
                             @Override
                             public void onSeriesProgressCalculated(int progress, JSONObject series) {
+                                String posterURL = networkUtils.extractMoviePosterURL(series);
+                                if (posterURL != null) {
+                                    model.setPoster(posterURL);
+                                }
                                 model.setProgress(progress);
-                                notifyItemChanged(docId); //DeepSeek: Update specific item
+                                notifyItemChanged(docId);
                             }
                         });
-                    }
-                }
-            });
+            }
         });
 
         filteredSeries.clear();

@@ -1,5 +1,6 @@
 package com.matheesha.flixer;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.matheesha.flixer.utilities.DatabaseUtils;
 import com.matheesha.flixer.utilities.NetworkUtils;
+import com.matheesha.flixer.utilities.MediaCacheManager;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -113,7 +115,7 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
         //REFERENCE: ChatGPT - with my own additions
         Runnable setupSpinners = () -> {
             try {
-                JSONObject response = SeriesCacheManager.getSeries(tmdb_id);
+                JSONObject response = MediaCacheManager.getSeries(tmdb_id);
                 if (response == null)  return;
 
                 ArrayList<Integer> seasonNumbers = new ArrayList<>();
@@ -235,7 +237,7 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
         };
 
         //If cached, skip the network call
-        if (SeriesCacheManager.contains(tmdb_id)) {
+        if (MediaCacheManager.contains(tmdb_id)) {
             setupSpinners.run();
         } else {
             networkUtils.fetchSeriesInfoByTMDB(tmdb_id, new NetworkUtils.SeriesInfoListener() {
@@ -260,19 +262,26 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
 
                 WatchlistSeriesModel series = seriesWatchlist.get(adapterPosition);
 
-                databaseUtils.deleteFromWatchlist(false, series.getDocumentId(),
-                        new DatabaseUtils.DeleteListener() {
-                            @Override
-                            public void onDeleteSuccess() {
-                                Toast.makeText(context, "Removed from Watchlist!", Toast.LENGTH_LONG).show();
-                            }
+                new AlertDialog.Builder(holder.itemView.getContext())
+                        .setTitle("Remove from Watchlist")
+                        .setMessage("Are you sure you want to remove " + series.getTitle() + " from your watchlist?")
+                        .setPositiveButton("Yes", (dialog, which) -> {
+                            databaseUtils.deleteFromWatchlist(false, series.getDocumentId(),
+                                    new DatabaseUtils.DeleteListener() {
+                                        @Override
+                                        public void onDeleteSuccess() {
+                                            Toast.makeText(context, "Removed from Watchlist!", Toast.LENGTH_LONG).show();
+                                        }
 
-                            @Override
-                            public void onDeleteFailure(Exception error) {
-                                Toast.makeText(context, "Failed to remove series from watchlist!", Toast.LENGTH_LONG).show();
-                                error.printStackTrace();
-                            }
-                        });
+                                        @Override
+                                        public void onDeleteFailure(Exception error) {
+                                            Toast.makeText(context, "Failed to remove series from watchlist!", Toast.LENGTH_LONG).show();
+                                            error.printStackTrace();
+                                        }
+                                    });
+                        })
+                        .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                        .show();
             }
         });
 
