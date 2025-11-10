@@ -16,16 +16,14 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.matheesha.flixer.utilities.NetworkUtils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -38,24 +36,12 @@ import java.util.Map;
 import com.squareup.picasso.Picasso;
 
 public class FilmDetailsActivity extends AppCompatActivity {
-    // Base endpoints
-    private static final String TMBD_Movie_Base_URL = "https://api.themoviedb.org/3/movie/";
-    private static final String TMBD_TV_Base_URL = "https://api.themoviedb.org/3/tv/";
-    private static final String TMBD_FIND_URL = "https://api.themoviedb.org/3/find/";
-
-    private static String TMBD_Movie_Search_URL = TMBD_Movie_Base_URL;
-    private static String TMBD_TV_Search_URL = TMBD_TV_Base_URL;
-    private static String TMDB_Image_Base_URL = "https://image.tmdb.org/t/p/original";
-    private static String TMBD_Profile_Picture_Base_URL = "https://image.tmdb.org/t/p/w185";
-    private static String TMDB_Poster_Base_URL = "https://image.tmdb.org/t/p/w342";
-    private static String OMDB_Base_URL = "https://www.omdbapi.com/";
+    // Request tags
     private static String TAG_MOVIE_DETAILS = "movie_details";
     private static String TAG_MOVIE_CREDITS = "movie_credits";
     private static String TAG_SIMILAR_MOVIES = "similar_movies";
     private static String TAG_EXTERNAL_IDS = "external_ids";
     private static String TAG_OMDB = "omdb";
-    private final static String TMDB_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo";
-    private final static String OMDB_API_KEY = "f9c8b034";
 
     // To hold IMDb id fetched from TMDB external ids
     public String imdbFromExternal;
@@ -63,6 +49,7 @@ public class FilmDetailsActivity extends AppCompatActivity {
 
 
     RequestQueue queue;
+    NetworkUtils networkUtils;
     TextView title, year, imdb, metascore, plot, duration, language;
     ImageView poster;
     MaterialButton moreInfoButton,addToWatchlistButton;
@@ -92,13 +79,10 @@ public class FilmDetailsActivity extends AppCompatActivity {
             if (explicitType != null) {
                 if (explicitType.equalsIgnoreCase("tv")) {
                     isTv = true;
-                    TMBD_Movie_Search_URL = TMBD_TV_Base_URL;
                 } else if (explicitType.equalsIgnoreCase("movie")) {
                     isTv = false;
-                    TMBD_Movie_Search_URL = TMBD_Movie_Base_URL;
                 }
             }
-            applyActiveBaseUrl();
         }
 
         super.onCreate(savedInstanceState);
@@ -124,7 +108,8 @@ public class FilmDetailsActivity extends AppCompatActivity {
             return insets;
         });
 
-        queue = Volley.newRequestQueue(this);
+    queue = Volley.newRequestQueue(this);
+    networkUtils = new NetworkUtils(queue);
         if (moreInfoButton != null) {
             moreInfoButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -157,6 +142,7 @@ public class FilmDetailsActivity extends AppCompatActivity {
                 movie.put("status", DEFAULT_STATUS);
                 movie.put("date_added", fire_date_added);
                 movie.put("time_added", fire_time_added);
+                movie.put("tmdb_id", tmdbId);
 
                 db.collection("users")
                         .document("zxG3kkJH4WwOu4elGsCx") // Static user document ID for demonstration
@@ -190,51 +176,28 @@ public class FilmDetailsActivity extends AppCompatActivity {
     private void LoadMovieDetails(int id) {
         cancelPendingRequests();
         triedMediaTypeFallback = false;
-        String endpoint = TMBD_Movie_Search_URL + id + "?language=en-US";
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, endpoint, null, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            if (!response.isNull("success") && !response.optBoolean("success", true) && response.optInt("status_code", 0) == 34) {
-                                attemptMediaTypeFallback(id);
-                                return;
-                            }
-                            String posterPath = response.optString("poster_path","");
-                            updatePosterImage(posterPath);
-                            moreInfoHomepageUrl = response.optString("homepage","").trim();
-                            fetchExternalIds(id);
-                            fetchMovieCredits(id);
-                            fetchSimilarMovies(id);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        if (!attemptMediaTypeFallback(id, error)) {
-                            errorGettingData(error.toString());
-                        }
-                    }
-
-                }) {
-
-                    //https://stackoverflow.com/questions/63870554/how-to-add-a-header-to-a-request-from-volley-library
-                    @Override
-                    public Map<String, String> getHeaders() {
-                        Map<String, String> headers = new HashMap<>();
-                        headers.put("Authorization", "Bearer " + TMDB_TOKEN);
-                        headers.put("accept", "application/json");
-                        return headers;
-                    }
-        };
-        //https://stackoverflow.com/questions/36127870/how-to-set-tag-to-the-request-and-get-it-from-response-volley-asynchronous-reque
-        //Idea from ChatGPT
-        jsonObjectRequest.setTag(TAG_MOVIE_DETAILS);
-        queue.add(jsonObjectRequest);
-        fetchMovieCredits(id);
-        fetchSimilarMovies(id);
-        queue.add(jsonObjectRequest);
+        networkUtils.fetchDetails(id, isTv, TAG_MOVIE_DETAILS, response -> {
+            if (response == null) {
+                if (!attemptMediaTypeFallback(id)) {
+                    errorGettingData("Failed to fetch details");
+                }
+                return;
+            }
+            try {
+                if (!response.isNull("success") && !response.optBoolean("success", true) && response.optInt("status_code", 0) == 34) {
+                    attemptMediaTypeFallback(id);
+                    return;
+                }
+                String posterPath = response.optString("poster_path","");
+                updatePosterImage(posterPath);
+                moreInfoHomepageUrl = response.optString("homepage","").trim();
+                fetchExternalIds(id);
+                fetchMovieCredits(id);
+                fetchSimilarMovies(id);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
     private boolean attemptMediaTypeFallback(int id) {
         return attemptMediaTypeFallback(id, null);
@@ -269,259 +232,143 @@ public class FilmDetailsActivity extends AppCompatActivity {
 
         triedMediaTypeFallback = true;
         isTv = !isTv;
-        applyActiveBaseUrl();
         LoadMovieDetails(id);
         return true;
     }
 
     private void resolveFromImdbId(String imdbId) {
         cancelPendingRequests();
-        String url = TMBD_FIND_URL + imdbId + "?external_source=imdb_id";
-        JsonObjectRequest findRequest = new JsonObjectRequest(Request.Method.GET, url, null,
-                response -> {
-                    try {
-                        JSONArray movieResults = response.optJSONArray("movie_results");
-                        JSONArray tvResults = response.optJSONArray("tv_results");
-
-                        if (movieResults != null && movieResults.length() > 0) {
-                            JSONObject first = movieResults.optJSONObject(0);
-                            if (first != null) {
-                                tmdbId = first.optInt("id", -1);
-                                isTv = false;
-                                TMBD_Movie_Search_URL = TMBD_Movie_Base_URL;
-                            }
-                        } else if (tvResults != null && tvResults.length() > 0) {
-                            JSONObject first = tvResults.optJSONObject(0);
-                            if (first != null) {
-                                tmdbId = first.optInt("id", -1);
-                                isTv = true;
-                                TMBD_Movie_Search_URL = TMBD_TV_Base_URL;
-                            }
-                        } else {
-                            errorGettingData("Unable to resolve IMDb id");
-                            return;
-                        }
-
-                        if (tmdbId <= 0) {
-                            errorGettingData("Invalid TMDB id");
-                            return;
-                        }
-                        LoadMovieDetails(tmdbId);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        errorGettingData("Parse error");
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        errorGettingData(error.toString());
-                    }
-                }) {
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("Authorization", "Bearer " + TMDB_TOKEN);
-                headers.put("accept", "application/json");
-                return headers;
+        networkUtils.findByImdb(imdbId, "find_request", (resolvedId, resolvedIsTv) -> {
+            try {
+                if (resolvedId == null || resolvedId <= 0) {
+                    errorGettingData("Invalid TMDB id");
+                    return;
+                }
+                tmdbId = resolvedId;
+                if (resolvedIsTv != null) {
+                    isTv = resolvedIsTv;
+                }
+                LoadMovieDetails(tmdbId);
+            } catch (Exception e) {
+                e.printStackTrace();
+                errorGettingData("Parse error");
             }
-        };
-        findRequest.setTag("find_request");
-        queue.add(findRequest);
+        });
     }
 
-    private void applyActiveBaseUrl() {
-        TMBD_Movie_Search_URL = isTv ? TMBD_TV_Base_URL : TMBD_Movie_Base_URL;
-    }
 
     private void fetchMovieCredits(int movieId) {
-        String creditsUrl = TMBD_Movie_Search_URL + movieId + "/credits?language=en-US";
-        JsonObjectRequest creditsRequest = new JsonObjectRequest(Request.Method.GET, creditsUrl, null, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            List<Cast> updatedCast = new ArrayList<>();
-                            JSONArray castArray = response.optJSONArray("cast");
-                            if (castArray != null) {
-                                for (int i = 0; i < castArray.length(); i++) {
-                                    JSONObject castObject = castArray.optJSONObject(i);
-                                    if (castObject == null){
-                                        continue;
-                                    }
-
-                                    String department = castObject.optString("known_for_department", "");
-
-                                    if (!"Acting".equalsIgnoreCase(department)){
-                                        continue;
-                                    }
-
-                                    String name = castObject.optString("name", "").trim();
-                                    String character = castObject.optString("character", "").trim();
-                                    if (name.isEmpty() && character.isEmpty()){
-                                        continue;
-                                    }
-
-                                    String profilePath = castObject.optString("profile_path", "");
-                                    String profileUrl = buildProfileImageUrl(profilePath);
-
-                                    updatedCast.add(new Cast(name, character, profileUrl));
-                                }
-                            }
-
-                            castData.clear();
-                            castData.addAll(updatedCast);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        } finally {
-                            //https://developer.android.com/reference/androidx/recyclerview/widget/RecyclerView.Adapter
-                            if (castAdapter != null) {
-                                castAdapter.notifyDataSetChanged();
-                            }
+        networkUtils.fetchCredits(movieId, isTv, TAG_MOVIE_CREDITS, response -> {
+            if (response == null) return;
+            try {
+                List<Cast> updatedCast = new ArrayList<>();
+                JSONArray castArray = response.optJSONArray("cast");
+                if (castArray != null) {
+                    for (int i = 0; i < castArray.length(); i++) {
+                        JSONObject castObject = castArray.optJSONObject(i);
+                        if (castObject == null){
+                            continue;
                         }
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                error.printStackTrace();
-            }
-        }) {
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("Authorization", "Bearer " + TMDB_TOKEN);
-                headers.put("accept", "application/json");
-                return headers;
-            }
-        };
 
-        creditsRequest.setTag(TAG_MOVIE_CREDITS);
-        queue.add(creditsRequest);
+                        String department = castObject.optString("known_for_department", "");
+
+                        if (!"Acting".equalsIgnoreCase(department)){
+                            continue;
+                        }
+
+                        String name = castObject.optString("name", "").trim();
+                        String character = castObject.optString("character", "").trim();
+                        if (name.isEmpty() && character.isEmpty()){
+                            continue;
+                        }
+
+                        String profilePath = castObject.optString("profile_path", "");
+                        String profileUrl = buildProfileImageUrl(profilePath);
+
+                        updatedCast.add(new Cast(name, character, profileUrl));
+                    }
+                }
+
+                castData.clear();
+                castData.addAll(updatedCast);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                //https://developer.android.com/reference/androidx/recyclerview/widget/RecyclerView.Adapter
+                if (castAdapter != null) {
+                    castAdapter.notifyDataSetChanged();
+                }
+            }
+        });
     }
 
     private String buildProfileImageUrl(String profilePath) {
-        if (profilePath == null || profilePath.isEmpty()){
-            return null;
-        }
-
-        String trimmed = profilePath.trim();
-
-        if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)){
-            return null;
-        }
-
-        return TMBD_Profile_Picture_Base_URL + trimmed;
+        return networkUtils != null ? networkUtils.buildProfileUrl(profilePath) : null;
     }
 
     private void fetchSimilarMovies(int movieId) {
-        String similarUrl = TMBD_Movie_Search_URL + movieId + "/similar?language=en-US&page=1";
-        JsonObjectRequest similarRequest = new JsonObjectRequest(Request.Method.GET, similarUrl, null,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            List<Similar> updatedSimilar = new ArrayList<>();
-                            JSONArray results = response.optJSONArray("results");
-                            if (results != null) {
-                                for (int i = 0; i < results.length(); i++) {
-                                    JSONObject resultObject = results.optJSONObject(i);
-                                    if (resultObject == null){
-                                        continue;
-                                    }
-
-                                    int similarId = resultObject.optInt("id", -1);
-                                    String title = resultObject.optString("title", "").trim();
-
-                                    if (title.isEmpty()) {
-                                        title = resultObject.optString("name", "").trim();
-                                    }
-
-                                    String posterPath = resultObject.optString("poster_path", "");
-                                    String posterUrl = buildPosterImageUrl(posterPath);
-
-                                    if (similarId <= 0){
-                                        continue;
-                                    }
-
-                                    if (title.isEmpty() && posterUrl == null){
-                                        continue;
-                                    }
-
-                                    updatedSimilar.add(new Similar(similarId, title, posterUrl));
-                                }
-                            }
-
-                            similarData.clear();
-                            similarData.addAll(updatedSimilar);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        } finally {
-                            if (similarAdapter != null) {
-                                similarAdapter.notifyDataSetChanged();
-                            }
+        networkUtils.fetchSimilar(movieId, isTv, TAG_SIMILAR_MOVIES, response -> {
+            if (response == null) return;
+            try {
+                List<Similar> updatedSimilar = new ArrayList<>();
+                JSONArray results = response.optJSONArray("results");
+                if (results != null) {
+                    for (int i = 0; i < results.length(); i++) {
+                        JSONObject resultObject = results.optJSONObject(i);
+                        if (resultObject == null){
+                            continue;
                         }
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                error.printStackTrace();
-            }
-        }) {
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("Authorization", "Bearer " + TMDB_TOKEN);
-                headers.put("accept", "application/json");
-                return headers;
-            }
-        };
 
-        similarRequest.setTag(TAG_SIMILAR_MOVIES);
-        queue.add(similarRequest);
+                        int similarId = resultObject.optInt("id", -1);
+                        String title = resultObject.optString("title", "").trim();
+
+                        if (title.isEmpty()) {
+                            title = resultObject.optString("name", "").trim();
+                        }
+
+                        String posterPath = resultObject.optString("poster_path", "");
+                        String posterUrl = buildPosterImageUrl(posterPath);
+
+                        if (similarId <= 0){
+                            continue;
+                        }
+
+                        if (title.isEmpty() && posterUrl == null){
+                            continue;
+                        }
+
+                        updatedSimilar.add(new Similar(similarId, title, posterUrl));
+                    }
+                }
+
+                similarData.clear();
+                similarData.addAll(updatedSimilar);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (similarAdapter != null) {
+                    similarAdapter.notifyDataSetChanged();
+                }
+            }
+        });
     }
 
     private String buildPosterImageUrl(String posterPath) {
-        if (posterPath == null){
-            return null;
-        }
-
-        String trimmed = posterPath.trim();
-        if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)){
-            return null;
-        }
-
-        return TMDB_Poster_Base_URL + trimmed;
+        return networkUtils != null ? networkUtils.buildPosterUrl(posterPath) : null;
     }
 
     private void fetchExternalIds(int movieId) {
-        String externalIdsUrl = TMBD_Movie_Search_URL + movieId + "/external_ids?language=en-US";
-        JsonObjectRequest extRequest = new JsonObjectRequest(Request.Method.GET, externalIdsUrl, null,  new Response.Listener<JSONObject>(){
-            @Override
-            public void onResponse(JSONObject response) {
-                try {
-                    imdbFromExternal = response.optString("imdb_id", "");
-                    if (!imdbFromExternal.isEmpty() && imdb != null) {
-                        fetchOmdbDetails(imdbFromExternal);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+        networkUtils.fetchExternalIds(movieId, isTv, TAG_EXTERNAL_IDS, response -> {
+            if (response == null) return;
+            try {
+                imdbFromExternal = response.optString("imdb_id", "");
+                if (!imdbFromExternal.isEmpty() && imdb != null) {
+                    fetchOmdbDetails(imdbFromExternal);
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                errorGettingData(error.toString());
-            }
-        }) {
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("Authorization", "Bearer " + TMDB_TOKEN);
-                headers.put("accept", "application/json");
-                return headers;
-            }
-        };
-        extRequest.setTag(TAG_EXTERNAL_IDS);
-        queue.add(extRequest);
+        });
     }
 
     private void fetchOmdbDetails(String imdbId) {
@@ -529,42 +376,35 @@ public class FilmDetailsActivity extends AppCompatActivity {
             return;
         }
 
-        String omdbUrl = OMDB_Base_URL + "?apikey=" + OMDB_API_KEY + "&i=" + imdbId;
-        JsonObjectRequest omdbRequest = new JsonObjectRequest(Request.Method.GET, omdbUrl, null, new Response.Listener<JSONObject>(){
-            @Override
-            public void onResponse(JSONObject response) {
-                try {
-                    String oTitle = safeField(response, "Title");
-                    String oYear = safeField(response, "Year");
-                    String oImdbRating = safeField(response, "imdbRating");
-                    String oMetascore = safeField(response, "Metascore");
-                    String oGenres = safeField(response, "Genre");
-                    String oPlot = safeField(response, "Plot");
-                    String oRuntime = safeField(response, "Runtime");
-                    String oLanguage = safeField(response, "Language");
-
-                    title.setText(oTitle);
-                    year.setText(oYear);
-                    imdb.setText(oImdbRating);
-                    metascore.setText(oMetascore);
-                    plot.setText(oPlot);
-                    duration.setText(oRuntime);
-                    language.setText(oLanguage);
-                    populateGenresFromOmdb(oGenres);
-
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        networkUtils.fetchOmdbByImdb(imdbId, TAG_OMDB, response -> {
+            if (response == null) {
+                errorGettingData("OMDb fetch error");
+                return;
             }
-                }, new Response.ErrorListener(){
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                errorGettingData(error.toString());
+            try {
+                String oTitle = safeField(response, "Title");
+                String oYear = safeField(response, "Year");
+                String oImdbRating = safeField(response, "imdbRating");
+                String oMetascore = safeField(response, "Metascore");
+                String oGenres = safeField(response, "Genre");
+                String oPlot = safeField(response, "Plot");
+                String oRuntime = safeField(response, "Runtime");
+                String oLanguage = safeField(response, "Language");
+
+                title.setText(oTitle);
+                year.setText(oYear);
+                imdb.setText(oImdbRating);
+                metascore.setText(oMetascore);
+                plot.setText(oPlot);
+                duration.setText(oRuntime);
+                language.setText(oLanguage);
+                populateGenresFromOmdb(oGenres);
+
+
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
-        omdbRequest.setTag(TAG_OMDB);
-        queue.add(omdbRequest);
     }
 
 //    https://www.youtube.com/watch?v=QdJxWQY7SIE
@@ -656,7 +496,11 @@ public class FilmDetailsActivity extends AppCompatActivity {
                 return;
         }
 
-        String fullUrl = TMDB_Image_Base_URL + posterPath.trim();
+        String fullUrl = networkUtils != null ? networkUtils.buildOriginalImageUrl(posterPath.trim()) : null;
+        if (fullUrl == null || fullUrl.trim().isEmpty()) {
+            poster.setImageResource(R.drawable.loading);
+            return;
+        }
         Picasso.get().load(fullUrl).placeholder(R.drawable.loading).into(poster);
     }
 
