@@ -67,6 +67,7 @@ public class FilmDetailsActivity extends AppCompatActivity {
     // 550 - Fight Club
     // 603 - The Matrix
     // 497698 - Black Widow
+    //100088 - tlou
     String providedId = null;
     boolean isTv = false;
     boolean triedMediaTypeFallback = false;
@@ -133,29 +134,58 @@ public class FilmDetailsActivity extends AppCompatActivity {
         addToWatchlistButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String fire_title = title.getText().toString();
-                String DEFAULT_STATUS = "Plan to Watch";
-                String fire_date_added = java.time.LocalDate.now().toString();
-                String fire_time_added = java.time.LocalTime.now().withNano(0).toString();
+                if(!isTv){
+                    String fire_title = title.getText().toString();
+                    String DEFAULT_STATUS = "Plan to Watch";
+                    String fire_date_added = java.time.LocalDate.now().toString();
+                    String fire_time_added = java.time.LocalTime.now().withNano(0).toString();
 
-                Map<String, Object> movie = new HashMap<>();
-                movie.put("title", fire_title);
-                movie.put("status", DEFAULT_STATUS);
-                movie.put("date_added", fire_date_added);
-                movie.put("time_added", fire_time_added);
-                movie.put("tmdb_id", tmdbId);
+                    Map<String, Object> movie = new HashMap<>();
+                    movie.put("title", fire_title);
+                    movie.put("status", DEFAULT_STATUS);
+                    movie.put("date_added", fire_date_added);
+                    movie.put("time_added", fire_time_added);
+                    movie.put("tmdb_id", tmdbId);
 
-                db.collection("users")
-                        .document("zxG3kkJH4WwOu4elGsCx") // Static user document ID for demonstration
-                        .collection("watchlist_movies")
-                        .document(imdbFromExternal)
-                        .set(movie)
-                        .addOnSuccessListener(documentReference -> {
-                            Toast.makeText(FilmDetailsActivity.this, "Added to Watchlist", Toast.LENGTH_SHORT).show();
-                        })
-                        .addOnFailureListener(e -> {
-                            Toast.makeText(FilmDetailsActivity.this, "Error adding to Watchlist", Toast.LENGTH_SHORT).show();
-                        });
+                    db.collection("users")
+                            .document("zxG3kkJH4WwOu4elGsCx") // Static user document ID for demonstration
+                            .collection("watchlist_movies")
+                            .document(imdbFromExternal)
+                            .set(movie)
+                            .addOnSuccessListener(documentReference -> {
+                                Toast.makeText(FilmDetailsActivity.this, "Added to Watchlist", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(FilmDetailsActivity.this, "Error adding to Watchlist", Toast.LENGTH_SHORT).show();
+                            });
+                }else{
+                    String fire_title = title.getText().toString();
+                    String DEFAULT_STATUS = "Plan to Watch";
+                    String fire_date_added = java.time.LocalDate.now().toString();
+                    String fire_time_added = java.time.LocalTime.now().withNano(0).toString();
+
+                    Map<String, Object> movie = new HashMap<>();
+                    movie.put("title", fire_title);
+                    movie.put("status", DEFAULT_STATUS);
+                    movie.put("date_added", fire_date_added);
+                    movie.put("time_added", fire_time_added);
+                    movie.put("tmdb_id", tmdbId);
+                    movie.put("current_episode", 1);
+                    movie.put("current_season", 1);
+
+                    db.collection("users")
+                            .document("zxG3kkJH4WwOu4elGsCx") // Static user document ID for demonstration
+                            .collection("watchlist_series")
+                            .document(imdbFromExternal)
+                            .set(movie)
+                            .addOnSuccessListener(documentReference -> {
+                                Toast.makeText(FilmDetailsActivity.this, "Added to Watchlist", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(FilmDetailsActivity.this, "Error adding to Watchlist", Toast.LENGTH_SHORT).show();
+                            });
+                }
+
             }
         });
 
