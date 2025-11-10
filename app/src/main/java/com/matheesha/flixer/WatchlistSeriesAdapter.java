@@ -1,6 +1,5 @@
 package com.matheesha.flixer;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,12 +15,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.matheesha.flixer.utilities.DatabaseUtils;
 import com.matheesha.flixer.utilities.NetworkUtils;
 import com.squareup.picasso.Picasso;
@@ -30,8 +23,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeriesAdapter.MyViewHolder> {
     Context context;
@@ -177,7 +168,8 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                             seriesWatchlist.get(position).setCurrentSeason(selectedSeason);
 
                             //Update FireStore
-                            databaseUtils.updateSeriesProgress(series.getDocumentId(), selectedSeason, series.getCurrentEpisode(), new DatabaseUtils.UpdateStatusListener() {
+                            databaseUtils.updateSeriesProgress(series.getDocumentId(), selectedSeason, series.getCurrentEpisode(),
+                                    new DatabaseUtils.UpdateStatusListener() {
                                 @Override
                                 public void onUpdateSuccess() {
                                     Toast.makeText(context, "Season update successfully!", Toast.LENGTH_LONG).show();
@@ -215,7 +207,8 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                             seriesWatchlist.get(position).setCurrentEpisode(selectedEpisode);
 
                             //Update FireStore
-                            databaseUtils.updateSeriesProgress(series.getDocumentId(), series.getCurrentSeason(), selectedEpisode, new DatabaseUtils.UpdateStatusListener() {
+                            databaseUtils.updateSeriesProgress(series.getDocumentId(), series.getCurrentSeason(), selectedEpisode,
+                                    new DatabaseUtils.UpdateStatusListener() {
                                 @Override
                                 public void onUpdateSuccess() {
                                     Toast.makeText(context, "Episode update successful!", Toast.LENGTH_LONG).show();
