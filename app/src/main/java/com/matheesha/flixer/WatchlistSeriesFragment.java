@@ -24,6 +24,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.matheesha.flixer.utilities.DatabaseUtils;
 import com.matheesha.flixer.utilities.NetworkUtils;
 
 import org.json.JSONArray;
@@ -35,7 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class WatchlistSeriesFragment extends Fragment {
+public class WatchlistSeriesFragment extends Fragment implements DatabaseUtils.WatchlistListener {
 
     //Interface to update the entry count in WatchlistFragment
     public interface OnItemCountChangeListener {
@@ -48,6 +49,7 @@ public class WatchlistSeriesFragment extends Fragment {
     private OnItemCountChangeListener listener;
     private ListenerRegistration seriesRegistration;
     RequestQueue queue;
+    DatabaseUtils databaseUtils;
 
     public void setOnItemCountChangeListener(WatchlistSeriesFragment.OnItemCountChangeListener listener) {
         this.listener = listener;
@@ -66,10 +68,11 @@ public class WatchlistSeriesFragment extends Fragment {
 
         RecyclerView rvSeriesWatchlist = view.findViewById(R.id.series_watchlist_recyclerView);
         queue = Volley.newRequestQueue(requireContext());
+        databaseUtils = DatabaseUtils.getInstance();
 
         setupSeriesWatchlist();
 
-        adapter = new WatchlistSeriesAdapter(requireContext(), filteredSeries);
+        adapter = new WatchlistSeriesAdapter(requireContext(), filteredSeries, databaseUtils, new NetworkUtils(queue));
         rvSeriesWatchlist.setAdapter(adapter);
         rvSeriesWatchlist.setLayoutManager(new LinearLayoutManager(requireContext()));
     }
@@ -77,74 +80,71 @@ public class WatchlistSeriesFragment extends Fragment {
     private void setupSeriesWatchlist() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        seriesRegistration = db.collection("users")
-                .document("zxG3kkJH4WwOu4elGsCx")
-                .collection("watchlist_series")
-                .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                    @Override
-                    public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException error) {
-                        seriesWatchlist.clear();
+        seriesRegistration = databaseUtils.setupWatchlistListener(false, this);
+    }
 
-                        if (error != null) {
-                            error.printStackTrace();
-                            return;
-                        }
+    @Override
+    public void onWatchlistUpdate(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException error) {
+        seriesWatchlist.clear();
 
-                        if (queryDocumentSnapshots == null) return;
+        if (error != null) {
+            error.printStackTrace();
+            return;
+        }
 
-                        queryDocumentSnapshots.forEach(doc -> {
-                            String title = doc.getString("title");
-                            String status = doc.getString("status");
-                            int currentSeason = doc.getLong("current_season").intValue();
-                            int currentEpisode = doc.getLong("current_episode").intValue();
-                            int tmdb_id = doc.getLong("tmdb_id").intValue();
-                            String docId = doc.getId();
+        if (queryDocumentSnapshots == null) return;
 
-                            NetworkUtils networkUtils = new NetworkUtils(queue);
-                            int progress = 0;
+        queryDocumentSnapshots.forEach(doc -> {
+            String title = doc.getString("title");
+            String status = doc.getString("status");
+            int currentSeason = doc.getLong("current_season").intValue();
+            int currentEpisode = doc.getLong("current_episode").intValue();
+            int tmdb_id = doc.getLong("tmdb_id").intValue();
+            String docId = doc.getId();
 
-                            //Calculate progress if cache is available
-                            JSONObject seriesJSON = SeriesCacheManager.getSeries(tmdb_id);
-                            if (seriesJSON != null) {
-                                progress = networkUtils.calculateSeriesProgress(seriesJSON, currentSeason, currentEpisode);
-                            }
+            NetworkUtils networkUtils = new NetworkUtils(queue);
+            int progress = 0;
 
-                            //Fetching and setting the movie poster
-                            WatchlistSeriesModel model = new WatchlistSeriesModel(null, title, progress, currentSeason, currentEpisode, status, tmdb_id, docId);
-                            seriesWatchlist.add(model);
+            //Calculate progress if cache is available
+            JSONObject seriesJSON = SeriesCacheManager.getSeries(tmdb_id);
+            if (seriesJSON != null) {
+                progress = networkUtils.calculateSeriesProgress(seriesJSON, currentSeason, currentEpisode);
+            }
 
-                            //REFERENCE: ChatGPT - fetch the actual poster and progress asynchronously
-                            networkUtils.fetchPosterByIMDB(doc.getId(), false, new NetworkUtils.PosterFetchListener() {
-                                @Override
-                                public void onPosterFetched(String posterURL) {
-                                    if (posterURL != null) {
-                                        model.setPoster(posterURL);
-                                    }
+            //Fetching and setting the movie poster
+            WatchlistSeriesModel model = new WatchlistSeriesModel(null, title, progress, currentSeason, currentEpisode, status, tmdb_id, docId);
+            seriesWatchlist.add(model);
 
-                                    //If progress wasn't calculated because of a missing cache, calculate it after fetching
-                                    if (!SeriesCacheManager.contains(tmdb_id)) {
-                                        networkUtils.fetchSeriesInfoWithProgress(tmdb_id, currentSeason, currentEpisode, new NetworkUtils.SeriesProgressListener() {
-                                            @Override
-                                            public void onSeriesProgressCalculated(int progress, JSONObject series) {
-                                                model.setProgress(progress);
-                                                notifyItemChanged(docId); //DeepSeek: Update specific item
-                                            }
-                                        });
-                                    }
-                                }
-                            });
-                        });
-
-                        filteredSeries.clear();
-                        filteredSeries.addAll(seriesWatchlist);
-                        adapter.notifyDataSetChanged();
-
-                        //Notify the parent fragment about the item count
-                        if (listener != null) {
-                            listener.onItemCountChanged(seriesWatchlist.size());
-                        }
+            //REFERENCE: ChatGPT - fetch the actual poster and progress asynchronously
+            networkUtils.fetchPosterByIMDB(doc.getId(), false, new NetworkUtils.PosterFetchListener() {
+                @Override
+                public void onPosterFetched(String posterURL) {
+                    if (posterURL != null) {
+                        model.setPoster(posterURL);
                     }
-                });
+
+                    //If progress wasn't calculated because of a missing cache, calculate it after fetching
+                    if (!SeriesCacheManager.contains(tmdb_id)) {
+                        networkUtils.fetchSeriesInfoWithProgress(tmdb_id, currentSeason, currentEpisode, new NetworkUtils.SeriesProgressListener() {
+                            @Override
+                            public void onSeriesProgressCalculated(int progress, JSONObject series) {
+                                model.setProgress(progress);
+                                notifyItemChanged(docId); //DeepSeek: Update specific item
+                            }
+                        });
+                    }
+                }
+            });
+        });
+
+        filteredSeries.clear();
+        filteredSeries.addAll(seriesWatchlist);
+        adapter.notifyDataSetChanged();
+
+        //Notify the parent fragment about the item count
+        if (listener != null) {
+            listener.onItemCountChanged(seriesWatchlist.size());
+        }
     }
 
     public void notifyItemChanged(String documentId) {

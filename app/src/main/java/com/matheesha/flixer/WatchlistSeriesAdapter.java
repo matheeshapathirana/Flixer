@@ -22,6 +22,8 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.matheesha.flixer.utilities.DatabaseUtils;
+import com.matheesha.flixer.utilities.NetworkUtils;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -34,14 +36,14 @@ import java.util.Map;
 public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeriesAdapter.MyViewHolder> {
     Context context;
     ArrayList<WatchlistSeriesModel> seriesWatchlist;
+    private DatabaseUtils databaseUtils;
+    private NetworkUtils networkUtils;
 
-    //Variables for network request
-    String TMDB_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo";
-    String TMDB_SERIES_INFO_URL = "https://api.themoviedb.org/3/tv/";
-
-    public WatchlistSeriesAdapter(Context context, ArrayList<WatchlistSeriesModel> seriesWatchlist) {
+    public WatchlistSeriesAdapter(Context context, ArrayList<WatchlistSeriesModel> seriesWatchlist, DatabaseUtils databaseUtils, NetworkUtils networkUtils) {
         this.context = context;
         this.seriesWatchlist = seriesWatchlist;
+        this.databaseUtils = databaseUtils;
+        this.networkUtils = networkUtils;
     }
 
     @NonNull
@@ -92,17 +94,18 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                     seriesWatchlist.get(position).setStatus(selectedStatus);
 
                     //Update FireStore
-                    FirebaseFirestore db = FirebaseFirestore.getInstance();
-                    db.collection("users")
-                            .document("zxG3kkJH4WwOu4elGsCx")
-                            .collection("watchlist_series")
-                            .document(seriesWatchlist.get(position).getDocumentId())
-                            .update("status", selectedStatus)
-                            .addOnSuccessListener(success -> {
-                                Toast.makeText(context.getApplicationContext(), "Movie status updated successfully!", Toast.LENGTH_LONG).show();
-                            })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(context.getApplicationContext(), "Failed to update movie status!", Toast.LENGTH_LONG).show();
+                    databaseUtils.updateStatus(false, seriesWatchlist.get(position).getDocumentId(), selectedStatus,
+                            new DatabaseUtils.UpdateStatusListener() {
+                                @Override
+                                public void onUpdateSuccess() {
+                                    Toast.makeText(context, "Series status updated successfully!", Toast.LENGTH_LONG).show();
+                                }
+
+                                @Override
+                                public void onUpdateFailure(Exception error) {
+                                    Toast.makeText(context, "Failed to update series status!", Toast.LENGTH_LONG).show();
+                                    error.printStackTrace();
+                                }
                             });
                 }
             }
@@ -115,7 +118,6 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
 
         //-------------- Season and Episode Spinners --------------------
         int tmdb_id = seriesWatchlist.get(position).getTmdb_id();
-        String seriesURL = TMDB_SERIES_INFO_URL + tmdb_id;
 
         //REFERENCE: ChatGPT - with my own additions
         Runnable setupSpinners = () -> {
@@ -150,7 +152,7 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                     @Override
                     public void onItemSelected(AdapterView<?> adapterView, View view, int seasonPosition, long l) {
                         int episodeCount = episodeCounts.get(seasonPosition);
-                        String selectedSeason = adapterView.getItemAtPosition(seasonPosition).toString();
+                        int selectedSeason = Integer.parseInt(adapterView.getItemAtPosition(seasonPosition).toString());
 
                         ArrayList<Integer> episodes = new ArrayList<>();
 
@@ -170,23 +172,23 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                         holder.episodeSpinner.setSelection(episodeSpinnerPosition);
 
                         //--- NOT CHATGPT - Updating database on episode or season selections
-                        if (Integer.parseInt(selectedSeason) != seriesWatchlist.get(position).getCurrentSeason()) {
+                        if (selectedSeason != seriesWatchlist.get(position).getCurrentSeason()) {
                             //Update local model
-                            seriesWatchlist.get(position).setCurrentSeason(Integer.parseInt(selectedSeason));
+                            seriesWatchlist.get(position).setCurrentSeason(selectedSeason);
 
                             //Update FireStore
-                            FirebaseFirestore db = FirebaseFirestore.getInstance();
-                            db.collection("users")
-                                    .document("zxG3kkJH4WwOu4elGsCx")
-                                    .collection("watchlist_series")
-                                    .document(seriesWatchlist.get(position).getDocumentId())
-                                    .update("current_season", Integer.parseInt(selectedSeason))
-                                    .addOnSuccessListener(success -> {
-                                        Toast.makeText(context.getApplicationContext(), "Season update successful!", Toast.LENGTH_SHORT).show();
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Toast.makeText(context.getApplicationContext(), "Failed to update season.", Toast.LENGTH_SHORT).show();
-                                    });
+                            databaseUtils.updateSeriesProgress(series.getDocumentId(), selectedSeason, series.getCurrentEpisode(), new DatabaseUtils.UpdateStatusListener() {
+                                @Override
+                                public void onUpdateSuccess() {
+                                    Toast.makeText(context, "Season update successfully!", Toast.LENGTH_LONG).show();
+                                }
+
+                                @Override
+                                public void onUpdateFailure(Exception error) {
+                                    Toast.makeText(context, "Failed to update season!", Toast.LENGTH_LONG).show();
+                                    error.printStackTrace();
+                                }
+                            });
                         }
                     }
 
@@ -205,26 +207,26 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                 holder.episodeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
                     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                        String selectedEpisode = adapterView.getItemAtPosition(i).toString();
+                        int selectedEpisode = Integer.parseInt(adapterView.getItemAtPosition(i).toString());
 
                         //Only update Firestore if the value actually changed
-                        if (Integer.parseInt(selectedEpisode) != seriesWatchlist.get(position).getCurrentEpisode()) {
+                        if (selectedEpisode != seriesWatchlist.get(position).getCurrentEpisode()) {
                             //Update local model
-                            seriesWatchlist.get(position).setStatus(selectedEpisode);
+                            seriesWatchlist.get(position).setCurrentEpisode(selectedEpisode);
 
                             //Update FireStore
-                            FirebaseFirestore db = FirebaseFirestore.getInstance();
-                            db.collection("users")
-                                    .document("zxG3kkJH4WwOu4elGsCx")
-                                    .collection("watchlist_series")
-                                    .document(seriesWatchlist.get(position).getDocumentId())
-                                    .update("current_episode", Integer.parseInt(selectedEpisode))
-                                    .addOnSuccessListener(success -> {
-                                        Toast.makeText(context.getApplicationContext(), "Episode update successful!", Toast.LENGTH_SHORT).show();
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Toast.makeText(context.getApplicationContext(), "Episode update failed.", Toast.LENGTH_SHORT).show();
-                                    });
+                            databaseUtils.updateSeriesProgress(series.getDocumentId(), series.getCurrentSeason(), selectedEpisode, new DatabaseUtils.UpdateStatusListener() {
+                                @Override
+                                public void onUpdateSuccess() {
+                                    Toast.makeText(context, "Episode update successful!", Toast.LENGTH_LONG).show();
+                                }
+
+                                @Override
+                                public void onUpdateFailure(Exception error) {
+                                    Toast.makeText(context, "Failed to update episode!", Toast.LENGTH_LONG).show();
+                                    error.printStackTrace();
+                                }
+                            });
                         }
                     }
 
@@ -243,30 +245,16 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
         if (SeriesCacheManager.contains(tmdb_id)) {
             setupSpinners.run();
         } else {
-            RequestQueue queue = Volley.newRequestQueue(context);
-            JsonObjectRequest request = new JsonObjectRequest(
-                    Request.Method.GET,
-                    seriesURL,
-                    null,
-                    response -> {
-                        //Cache it for next time
-                        SeriesCacheManager.putSeries(tmdb_id, response);
-                        setupSpinners.run();
-                    },
-                    volleyError -> {
-                        volleyError.printStackTrace();
-                        Toast.makeText(context, "Failed to load season information", Toast.LENGTH_SHORT).show();
-                    }
-            ) {
+            networkUtils.fetchSeriesInfoByTMDB(tmdb_id, new NetworkUtils.SeriesInfoListener() {
                 @Override
-                public Map<String, String> getHeaders() throws AuthFailureError {
-                    Map<String, String> headers = new HashMap<String, String>();
-                    headers.put("accept", "application/json");
-                    headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
-                    return headers;
+                public void onSeriesInfoFetched(JSONObject seriesInfo) {
+                    if (seriesInfo != null) {
+                        setupSpinners.run();
+                    } else {
+                        Toast.makeText(context, "Failed to load season information", Toast.LENGTH_LONG).show();
+                    }
                 }
-            };
-            queue.add(request);
+            });
         }
 
         //-------------- Delete Button ----------------------
@@ -279,25 +267,19 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
 
                 WatchlistSeriesModel series = seriesWatchlist.get(adapterPosition);
 
-                new AlertDialog.Builder(holder.itemView.getContext())
-                        .setTitle("Remove from Watchlist")
-                        .setMessage("Are you sure you want to remove " + series.getTitle() + " from your watchlist?")
-                        .setPositiveButton("Yes", (dialog, which) -> {
-                            FirebaseFirestore db = FirebaseFirestore.getInstance();
-                            db.collection("users")
-                                    .document("zxG3kkJH4WwOu4elGsCx")
-                                    .collection("watchlist_series")
-                                    .document(series.getDocumentId())
-                                    .delete()
-                                    .addOnSuccessListener(success -> {
-                                        Toast.makeText(context.getApplicationContext(), "Removed from watchlist!", Toast.LENGTH_LONG).show();
-                                    })
-                                    .addOnFailureListener(error -> {
-                                        Toast.makeText(context.getApplicationContext(), "Failed to remove from watchlist!", Toast.LENGTH_LONG).show();
-                                    });
-                        })
-                        .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
-                        .show();
+                databaseUtils.deleteFromWatchlist(false, series.getDocumentId(),
+                        new DatabaseUtils.DeleteListener() {
+                            @Override
+                            public void onDeleteSuccess() {
+                                Toast.makeText(context, "Removed from Watchlist!", Toast.LENGTH_LONG).show();
+                            }
+
+                            @Override
+                            public void onDeleteFailure(Exception error) {
+                                Toast.makeText(context, "Failed to remove series from watchlist!", Toast.LENGTH_LONG).show();
+                                error.printStackTrace();
+                            }
+                        });
             }
         });
 
