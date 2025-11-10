@@ -90,10 +90,10 @@ public class WatchlistSeriesFragment extends Fragment implements DatabaseUtils.W
             String docId = doc.getId();
 
             Long currentSeasonNumber = doc.getLong("current_season");
-            int currentSeason = (currentSeasonNumber != null) ? currentSeasonNumber.intValue() : 0;
+            int currentSeason = (currentSeasonNumber != null) ? currentSeasonNumber.intValue() : 1;
 
             Long currentEpisodeNumber = doc.getLong("current_episode");
-            int currentEpisode = (currentEpisodeNumber != null) ? currentEpisodeNumber.intValue() : 0;
+            int currentEpisode = (currentEpisodeNumber != null) ? currentEpisodeNumber.intValue() : 1;
 
             Long tmdbNumber = doc.getLong("tmdb_id");
             int tmdb_id = tmdbNumber.intValue();
