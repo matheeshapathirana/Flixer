@@ -24,6 +24,7 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.matheesha.flixer.utilities.NetworkUtils;
+import com.matheesha.flixer.utilities.MediaCacheManager;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -176,6 +177,14 @@ public class FilmDetailsActivity extends AppCompatActivity {
     private void LoadMovieDetails(int id) {
         cancelPendingRequests();
         triedMediaTypeFallback = false;
+        // Try cache first
+        JSONObject cached = isTv ? MediaCacheManager.getSeries(id) : MediaCacheManager.getMovie(id);
+        if (cached != null) {
+            handleDetailsResponse(id, cached, false);
+            return;
+        }
+
+        // Fallback to network
         networkUtils.fetchDetails(id, isTv, TAG_MOVIE_DETAILS, response -> {
             if (response == null) {
                 if (!attemptMediaTypeFallback(id)) {
@@ -188,16 +197,31 @@ public class FilmDetailsActivity extends AppCompatActivity {
                     attemptMediaTypeFallback(id);
                     return;
                 }
-                String posterPath = response.optString("poster_path","");
-                updatePosterImage(posterPath);
-                moreInfoHomepageUrl = response.optString("homepage","").trim();
-                fetchExternalIds(id);
-                fetchMovieCredits(id);
-                fetchSimilarMovies(id);
+                // cache the response
+                if (isTv) {
+                    MediaCacheManager.putSeries(id, response);
+                } else {
+                    MediaCacheManager.putMovie(id, response);
+                }
+                handleDetailsResponse(id, response, true);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
+    }
+
+    private void handleDetailsResponse(int id, JSONObject response, boolean fromNetwork) {
+        try {
+            String posterPath = response.optString("poster_path", "");
+            updatePosterImage(posterPath);
+            moreInfoHomepageUrl = response.optString("homepage", "").trim();
+            // Continue fetching other data (not cached yet)
+            fetchExternalIds(id);
+            fetchMovieCredits(id);
+            fetchSimilarMovies(id);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
     private boolean attemptMediaTypeFallback(int id) {
         return attemptMediaTypeFallback(id, null);
