@@ -2,6 +2,8 @@ package com.matheesha.flixer.utilities;
 
 import androidx.annotation.Nullable;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
@@ -9,7 +11,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 
 public class DatabaseUtils {
-    public static final String USER_DOCUMENT_ID = "zxG3kkJH4WwOu4elGsCx";
+    //public static final String USER_DOCUMENT_ID = "zxG3kkJH4WwOu4elGsCx";
     public static final String COLLECTION_USERS = "users";
     public static final String COLLECTION_WATCHLIST_MOVIES = "watchlist_movies";
     public static final String COLLECTION_WATCHLIST_SERIES = "watchlist_series";
@@ -48,10 +50,19 @@ public class DatabaseUtils {
         void onDeleteFailure(Exception error);
     }
 
+    public static String getCurrentUserID() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            return user.getUid();
+        } else {
+            return "zxG3kkJH4WwOu4elGsCx"; //fallback user id
+        }
+    }
+
     //Setup a real time listener for movies and series watchlist
     public ListenerRegistration setupWatchlistListener(boolean isMovie, WatchlistListener listener) {
         return db.collection(COLLECTION_USERS)
-                .document(USER_DOCUMENT_ID)
+                .document(getCurrentUserID())
                 .collection(isMovie ? COLLECTION_WATCHLIST_MOVIES : COLLECTION_WATCHLIST_SERIES)
                 .addSnapshotListener(new EventListener<QuerySnapshot>() {
                     @Override
@@ -64,7 +75,7 @@ public class DatabaseUtils {
     //Status update for both movies and series
     public void updateStatus(boolean isMovie, String documentId, String newStatus, UpdateStatusListener listener) {
         db.collection(COLLECTION_USERS)
-                .document(USER_DOCUMENT_ID)
+                .document(getCurrentUserID())
                 .collection(isMovie ? COLLECTION_WATCHLIST_MOVIES : COLLECTION_WATCHLIST_SERIES)
                 .document(documentId)
                 .update("status", newStatus)
@@ -75,7 +86,7 @@ public class DatabaseUtils {
     //Update season and episode of a series
     public void updateSeriesProgress(String documentId, int currentSeason, int currentEpisode, UpdateStatusListener listener) {
         db.collection(COLLECTION_USERS)
-                .document(USER_DOCUMENT_ID)
+                .document(getCurrentUserID())
                 .collection(COLLECTION_WATCHLIST_SERIES)
                 .document(documentId)
                 .update(
@@ -89,7 +100,7 @@ public class DatabaseUtils {
     //Delete movie or series
     public void deleteFromWatchlist(boolean isMovie, String documentId, DeleteListener listener) {
         db.collection(COLLECTION_USERS)
-                .document(USER_DOCUMENT_ID)
+                .document(getCurrentUserID())
                 .collection(isMovie ? COLLECTION_WATCHLIST_MOVIES : COLLECTION_WATCHLIST_SERIES)
                 .document(documentId)
                 .delete()
