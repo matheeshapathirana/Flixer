@@ -123,7 +123,7 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
 
                 JSONArray seasonsArray = response.getJSONArray("seasons");
 
-                for (int i=1; i < seasonsArray.length(); i++) {
+                for (int i=0; i < seasonsArray.length(); i++) {
                     JSONObject season = seasonsArray.getJSONObject(i);
                     int seasonNumber = season.getInt("season_number");
                     if (seasonNumber == 0) continue; //skip specials
