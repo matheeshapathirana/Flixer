@@ -1,3 +1,40 @@
 <resources>
+    <!-- It's a good practice to put all your app's text in here.
+         That way, you can easily translate your app into other languages. -->
+
+    <!-- The name of the app. -->
     <string name="app_name">Flixer</string>
+    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID</string>
+
+    <!-- Strings for the authentication screens. -->
+    <string name="welcome_title">Your cinematic journey begins here</string>
+    <string name="login_title">Welcome Back</string>
+    <string name="login_subtitle">Continue your cinematic journey</string>
+    <string name="signup_title">Join Flixer</string>
+    <string name="signup_subtitle">Start your cinematic journey today</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="confirm_password_hint">Confirm Password</string>
+    <string name="login_button">Login</string>
+    <string name="signup_button">Create Account</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="back_button">← Back</string>
+    <string name="reset_password_dialog_title">Reset Password</string>
+    <string name="reset_password_message">Enter your email address and we\'ll send you a password reset link.</string>
+    <string name="send_button">Send</string>
+    <string name="cancel_button">Cancel</string>
+
+    <!-- Error messages for the login and sign-up forms. -->
+    <string name="error_invalid_email">Please enter a valid email address</string>
+    <string name="error_short_password">Password must be at least 6 characters</string>
+    <string name="error_password_mismatch">Passwords don\'t match</string>
+    <string name="error_required_field">This field is required</string>
+    <string name="error_login_failed">Login failed. Please check your credentials</string>
+    <string name="error_signup_failed">Sign up failed. Please try again</string>
+    <string name="error_user_exists">An account with this email already exists</string>
+    <string name="error_weak_password">Password is too weak</string>
+
+    <!-- Success messages. -->
+    <string name="success_verification_sent">Verification email sent!</string>
+    <string name="success_reset_email_sent">Password reset email sent!</string>
 </resources>

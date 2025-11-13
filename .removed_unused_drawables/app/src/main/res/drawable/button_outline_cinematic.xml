@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A simple shape drawable for an outlined button. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- A 2dp stroke with the primary auth color. -->
+    <stroke
+        android:width="2dp"
+        android:color="@color/auth_primary" />
+    <!-- Rounded corners to match the modern UI. -->
+    <corners android:radius="28dp" />
+    <!-- A transparent background. -->
+    <solid android:color="@android:color/transparent" />
+</shape>

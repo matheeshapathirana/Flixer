@@ -1,12 +1,32 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Existing colors -->
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="dark_background">#121212</color>
-    <color name="card_background">#1E1E1E</color>
-    <color name="light_gray">#B3B3B3</color>
-    <color name="yellow">#FFD700</color>
-    <color name="green">#4CAF50</color>
-    <color name="primary_blue">#2196F3</color>
-    <color name="secondary_gray">#424242</color>
+
+    <!-- Auth System Colors -->
+    <color name="auth_dark_bg">#0F0F1A</color>
+    <color name="auth_primary">#FF6B8B</color>
+    <color name="auth_primary_dark">#FF4A6B</color>
+    <color name="auth_accent">#6B8BFF</color>
+    <color name="auth_hint">#666680</color>
+    <color name="auth_surface">#1A1A2E</color>
+    <color name="cinema_gradient_start">#FF6B8B</color>
+    <color name="cinema_gradient_end">#6B8BFF</color>
+
+    <color name="majestic_dark">#0C0B15</color>
+    <color name="majestic_purple">#1A1526</color>
+    <color name="neon_pink">#FF6B8B</color>
+    <color name="neon_blue">#6B8BFF</color>
+    <color name="glass_white">#20FFFFFF</color>
+    <color name="crystal_blue">#4FC3F7</color>
+
+    <color name="modern_glass">#25FFFFFF</color>
+    <color name="modern_glass_dark">#15FFFFFF</color>
+    <color name="modern_border">#30FFFFFF</color>
+    <color name="modern_text_secondary">#80FFFFFF</color>
 </resources>

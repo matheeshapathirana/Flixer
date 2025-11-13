@@ -53,6 +53,18 @@ We integrated external APIs to fetch real-time movie and TV information.
 
 ---
 
-## 📖 License  
-This project is created **for academic use only** (course assignment).  
-If reused or distributed, please add an appropriate license.  
+## 📖 Attributions and Licensing
+
+This project is created for academic use only as part of the HCI Assignment 02.
+
+### Design
+The UI design for the login and sign-up screens was inspired by the beautiful work of **[Fatima Bouzid](https://www.pinterest.com/pin/135178426310930500/)**.
+
+### Open-Source Libraries
+This project utilizes the following open-source libraries, all of which are licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0):
+- AndroidX Libraries (AppCompat, Activity, ConstraintLayout, CardView, ViewPager2, Fragment-KTX)
+- Google Material Components
+- Firebase Android BoM, Authentication, and Analytics
+- Lottie for Android
+- Volley
+- Picasso

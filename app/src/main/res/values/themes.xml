@@ -1,9 +1,62 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Flixer" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+<resources>
+
+    <!-- The main theme for the app. -->
+    <style name="Theme.Flixer" parent="Theme.Material3.Dark">
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:statusBarColor">@color/purple_700</item>
+        <item name="android:navigationBarColor">@color/purple_700</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
-    <style name="Theme.Flixer" parent="Base.Theme.Flixer" />
+    <!-- A separate theme for the authentication screens. -->
+    <style name="Theme.Flixer.Auth" parent="Theme.Flixer">
+        <item name="colorPrimary">@color/auth_primary</item>
+        <item name="colorPrimaryVariant">@color/auth_primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:statusBarColor">@color/auth_dark_bg</item>
+        <item name="android:navigationBarColor">@color/auth_dark_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@drawable/cinematic_background</item>
+    </style>
+
+    <!-- A custom style for the text input fields on the auth screens. -->
+    <style name="AuthEditTextStyle" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/auth_accent</item>
+        <item name="boxCornerRadiusBottomEnd">16dp</item>
+        <item name="boxCornerRadiusBottomStart">16dp</item>
+        <item name="boxCornerRadiusTopEnd">16dp</item>
+        <item name="boxCornerRadiusTopStart">16dp</item>
+        <item name="hintTextColor">@color/auth_hint</item>
+    </style>
+
+    <!-- A more modern style for the text input fields. -->
+    <style name="ModernInputStyle" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusBottomEnd">16dp</item>
+        <item name="boxCornerRadiusBottomStart">16dp</item>
+        <item name="boxCornerRadiusTopEnd">16dp</item>
+        <item name="boxCornerRadiusTopStart">16dp</item>
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+    </style>
+
+    <!-- A modern button style. -->
+    <style name="ModernButtonStyle" parent="Widget.Material3.Button">
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <!-- A modern outlined button style. -->
+    <style name="ModernButtonStyle.Outline" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="strokeColor">@color/white</item>
+    </style>
+
+    <!-- A simple style for medium-weight text. -->
+    <style name="MediumTextStyle">
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
 </resources>

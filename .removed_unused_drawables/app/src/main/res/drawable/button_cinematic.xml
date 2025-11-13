@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A simple shape drawable for a button with a gradient background. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- A gradient to give the button a nice, cinematic look. -->
+    <gradient
+        android:startColor="@color/cinema_gradient_start"
+        android:endColor="@color/cinema_gradient_end"
+        android:angle="45" />
+    <!-- Rounded corners to match the modern UI. -->
+    <corners android:radius="28dp" />
+</shape>

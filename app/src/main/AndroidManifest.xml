@@ -2,25 +2,35 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.Flixer">
+        android:theme="@style/Theme.Flixer"
+        tools:targetApi="31">
+
+        <!-- Auth Activity as Launcher -->
         <activity
-            android:name=".MainActivity"
-            android:exported="true">
+            android:name=".AuthActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Flixer.Auth"
+            android:screenOrientation="portrait">  <!-- Added orientation -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-    </application>
-    <uses-permission android:name="android.permission.INTERNET"/>
 
+        <!-- Main Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Flixer"
+            android:screenOrientation="portrait" />  <!-- Added orientation -->
+
+    </application>
 </manifest>
