@@ -16,6 +16,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
+import com.google.android.material.textfield.TextInputLayout;
 import com.matheesha.flixer.utilities.DatabaseUtils;
 import com.squareup.picasso.Picasso;
 
@@ -44,13 +46,16 @@ public class WatchlistMoviesAdapter extends RecyclerView.Adapter<WatchlistMovies
 
     @Override
     public void onBindViewHolder(@NonNull WatchlistMoviesAdapter.MyViewHolder holder, int position) {
+        WatchlistMovieModel movie = moviesWatchlist.get(position);
+
         holder.title.setText(moviesWatchlist.get(position).getTitle());
         holder.progressBar.setProgress(moviesWatchlist.get(position).getProgress());
 
         //set the image using Picasso
         Picasso.get().load(moviesWatchlist.get(position).getPoster()).into(holder.poster);
 
-        //REFERENCE: ChatGPT
+        //REFERENCE: Deepseek - Upgraded spinner to Material 3 design
+        /*
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
                 context,
                 R.array.watch_statuses,
@@ -100,6 +105,40 @@ public class WatchlistMoviesAdapter extends RecyclerView.Adapter<WatchlistMovies
 
             }
         });
+         */
+
+        ArrayAdapter<CharSequence> statusAdapter = ArrayAdapter.createFromResource(
+                context,
+                R.array.watch_statuses,
+                android.R.layout.simple_dropdown_item_1line
+        );
+        holder.statusDropdown.setAdapter(statusAdapter);
+        holder.statusDropdown.setText(movie.getStatus(), false);
+
+        holder.statusDropdown.setOnItemClickListener((parent, view, pos, id) -> {
+            String selectedStatus = parent.getItemAtPosition(pos).toString();
+
+            //Update the database if the selected status is different
+            if (!selectedStatus.equals(movie.getStatus())) {
+                //Update local model
+                movie.setStatus(selectedStatus);
+
+                //Update FireStore
+                databaseUtils.updateStatus(true, movie.getDocumentId(), selectedStatus,
+                        new DatabaseUtils.UpdateStatusListener() {
+                            @Override
+                            public void onUpdateSuccess() {
+                                Toast.makeText(context, "Movie status updated successfully!", Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onUpdateFailure(Exception error) {
+                                Toast.makeText(context, "Failed to update movie status!", Toast.LENGTH_SHORT).show();
+                                error.printStackTrace();
+                            }
+                        });
+            }
+        });
 
         holder.deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -143,14 +182,16 @@ public class WatchlistMoviesAdapter extends RecyclerView.Adapter<WatchlistMovies
         ImageView poster, deleteBtn;
         TextView title;
         ProgressBar progressBar;
-        Spinner statusSpinner;
+        TextInputLayout statusLayout;
+        MaterialAutoCompleteTextView statusDropdown;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             poster = itemView.findViewById(R.id.movie_card_poster);
             title = itemView.findViewById(R.id.movie_card_title);
             progressBar = itemView.findViewById(R.id.movie_card_progressbar);
-            statusSpinner = itemView.findViewById(R.id.movie_card_status_spinner);
+            statusLayout = itemView.findViewById(R.id.movie_card_status_layout);
+            statusDropdown = itemView.findViewById(R.id.movie_card_status_dropdown);
             deleteBtn = itemView.findViewById(R.id.movie_card_delete_icon);
         }
     }

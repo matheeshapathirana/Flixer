@@ -1,119 +1,149 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/linearLayout"
+    android:id="@+id/tv_card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="10dp">
-
-    <ImageView
-        android:id="@+id/tv_card_poster"
-        android:layout_width="90dp"
-        android:layout_height="130dp"
-        app:srcCompat="@drawable/watchlist_icon"
-        android:layout_marginRight="10dp"/>
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="?attr/colorSurfaceVariant">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <ImageView
+            android:id="@+id/tv_card_poster"
+            android:layout_width="90dp"
+            android:layout_height="130dp"
+            app:srcCompat="@drawable/watchlist_icon"
+            android:layout_marginRight="16dp"
+            android:background="?attr/colorSurface"/>
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="10dp">
-
-            <TextView
-                android:id="@+id/tv_card_title"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="N/A"
-                android:textSize="18dp"
-                android:textStyle="bold" />
-
-            <ImageView
-                android:id="@+id/tv_card_delete_icon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:srcCompat="@drawable/delete_icon" />
-
-        </LinearLayout>
-
-        <ProgressBar
-            android:id="@+id/tv_card_progressbar"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:progress="50"
-            android:layout_marginBottom="10dp"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:orientation="vertical">
 
             <LinearLayout
-                android:layout_width="0dp"
-                android:layout_weight="1"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
+                android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="10dp">
+                android:layout_marginBottom="16dp">
 
                 <TextView
-                    android:id="@+id/tv_card_season_txt"
-                    android:layout_width="match_parent"
+                    android:id="@+id/tv_card_title"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="Season"
-                    android:textSize="14dp" />
+                    android:layout_weight="1"
+                    android:text="N/A"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textStyle="bold" />
 
-                <Spinner
-                    android:id="@+id/tv_card_season_spinner"
-                    android:layout_width="match_parent"
+                <ImageView
+                    android:id="@+id/tv_card_delete_icon"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:spinnerMode="dropdown" />
+                    app:srcCompat="@drawable/delete_icon" />
 
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_weight="1"
+            <ProgressBar
+                android:id="@+id/tv_card_progressbar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="10dp">
+                android:progress="50"
+                android:layout_marginBottom="16dp"
+                android:progressTint="?attr/colorPrimary"
+                android:progressBackgroundTint="?attr/colorSurfaceVariant"/>
 
-                <TextView
-                    android:id="@+id/tv_card_episode_txt"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Episode"
-                    android:textSize="14dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-                <Spinner
-                    android:id="@+id/tv_card_episode_spinner"
-                    android:layout_width="match_parent"
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1.3"
                     android:layout_height="wrap_content"
-                    android:spinnerMode="dropdown"/>
+                    android:orientation="vertical"
+                    android:gravity="center_vertical"
+                    android:layout_marginEnd="4dp">
+
+                    <TextView
+                        android:id="@+id/tv_card_season_txt"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Season"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                        android:layout_marginBottom="4dp"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/tv_card_season_button"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Season 1"
+                        app:icon="@drawable/ic_arrow_drop_down"
+                        app:iconGravity="textEnd" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_vertical"
+                    android:layout_marginStart="4dp">
+
+                    <TextView
+                        android:id="@+id/tv_card_episode_txt"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Episode"
+                        android:textAppearance="@style/TextAppearance.Material3.LabelMedium"
+                        android:layout_marginBottom="4dp"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/tv_card_episode_button"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ep 01"
+                        app:icon="@drawable/ic_arrow_drop_down"
+                        app:iconGravity="textEnd" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
+            <!-- REFERENCE: DEEPSEEK - upgrading the spinner to Material 3 -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tv_card_status_layout"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:hint="Status">
+
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/tv_card_status_dropdown"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none"
+                    android:focusable="false" />
+
+            </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
-
-        <Spinner
-            android:id="@+id/tv_card_status_spinner"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:spinnerMode="dropdown"
-            android:entries="@array/watch_statuses" />
     </LinearLayout>
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>
