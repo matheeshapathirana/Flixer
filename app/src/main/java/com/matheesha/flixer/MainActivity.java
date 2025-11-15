@@ -3,17 +3,13 @@ package com.matheesha.flixer;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Window;
-import android.widget.Button;
-import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.squareup.picasso.Picasso;
-
-import de.hdodenhof.circleimageview.CircleImageView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,34 +30,40 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        loadUserProfile(currentUser);
-        setupLogoutButton();
-    }
+        setupBottomNav();
 
-    private void loadUserProfile(FirebaseUser user) {
-        TextView userName = findViewById(R.id.user_name);
-        TextView userEmail = findViewById(R.id.user_email);
-        CircleImageView profileImage = findViewById(R.id.profile_image);
-
-        userEmail.setText(user.getEmail());
-
-        String displayName = user.getDisplayName();
-        if (displayName == null || displayName.isEmpty()) {
-            displayName = user.getEmail().split("@")[0];
-        }
-        userName.setText(displayName);
-
-        if (user.getPhotoUrl() != null) {
-            Picasso.get().load(user.getPhotoUrl()).into(profileImage);
+        // Default to Home when user is logged in
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_nav);
+        if (bottomNav != null) {
+            bottomNav.setSelectedItemId(R.id.nav_home_icon);
+            replaceFragment(new HomeFragment());
         }
     }
 
-    private void setupLogoutButton() {
-        Button logoutButton = findViewById(R.id.btn_logout);
-        logoutButton.setOnClickListener(v -> {
-            mAuth.signOut();
-            startActivity(new Intent(this, AuthActivity.class));
-            finish();
+    private void setupBottomNav() {
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_nav);
+        if (bottomNav == null) return;
+
+        bottomNav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_home_icon) {
+                replaceFragment(new HomeFragment());
+                return true;
+            } else if (id == R.id.nav_watchlist_icon) {
+                replaceFragment(new WatchlistFragment());
+                return true;
+            } else if (id == R.id.nav_profile_icon) {
+                replaceFragment(new ProfileFragment());
+                return true;
+            }
+            return false;
         });
+    }
+
+    private void replaceFragment(Fragment fragment) {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.frame_layout, fragment)
+                .commit();
     }
 }

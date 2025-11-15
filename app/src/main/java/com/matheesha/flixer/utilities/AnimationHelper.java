@@ -1,4 +1,4 @@
-package com.matheesha.flixer.utils;
+package com.matheesha.flixer.utilities;
 
 import android.view.View;
 import android.view.animation.OvershootInterpolator;
