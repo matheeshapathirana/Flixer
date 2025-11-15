@@ -17,9 +17,13 @@ import java.util.Map;
 public class NetworkUtils {
     private static final String FIND_BY_ID_URL = "https://api.themoviedb.org/3/find/";
     private static final String TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/original";
+    private static final String TMDB_PROFILE_URL = "https://image.tmdb.org/t/p/w185";
+    private static final String TMDB_POSTER_W342_URL = "https://image.tmdb.org/t/p/w342";
     private static final String TV_SERIES_INFO_URL = "https://api.themoviedb.org/3/tv/";
     private static final String MOVIE_INFO_URL = "https://api.themoviedb.org/3/movie/";
+    private static final String OMDB_BASE_URL = "https://www.omdbapi.com/";
     private static final String TMDB_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo";
+    private static final String OMDB_API_KEY = "f9c8b034";
     RequestQueue queue;
 
     public NetworkUtils(RequestQueue queue) {
@@ -43,6 +47,16 @@ public class NetworkUtils {
 
     public interface SeriesProgressListener {
         void onSeriesProgressCalculated(int progress, JSONObject series);
+    }
+
+    // Generic JSON callback used for multiple endpoints
+    public interface JsonListener {
+        void onResponse(JSONObject json);
+    }
+
+    // Resolve TMDB id and media type from IMDb id
+    public interface IdResolveListener {
+        void onResolved(Integer tmdbId, Boolean isTv);
     }
 
     /*
@@ -117,6 +131,36 @@ public class NetworkUtils {
         queue.add(request);
     }
 
+    // Unified details fetcher for Movie or TV with language parameter and optional tag
+    public void fetchDetails(int tmdbID, boolean isTv, String tag, JsonListener callback) {
+        String base = isTv ? TV_SERIES_INFO_URL : MOVIE_INFO_URL;
+        String url = base + tmdbID + "?language=en-US";
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                response -> callback.onResponse(response),
+                error -> {
+                    error.printStackTrace();
+                    callback.onResponse(null);
+                }
+        ) {
+            //https://stackoverflow.com/questions/63870554/how-to-add-a-header-to-a-request-from-volley-library
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+
+        //https://stackoverflow.com/questions/36127870/how-to-set-tag-to-the-request-and-get-it-from-response-volley-asynchronous-reque
+        //Idea from ChatGPT
+        if (tag != null) request.setTag(tag);
+        queue.add(request);
+    }
+
     //Extracts poster URL from movie JSON
     public String extractMoviePosterURL (JSONObject movieDetails) {
         try {
@@ -129,6 +173,28 @@ public class NetworkUtils {
         }
 
         return null;
+    }
+
+    // Builders for various image sizes
+    public String buildOriginalImageUrl(String path) {
+        if (path == null) return null;
+        String trimmed = path.trim();
+        if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)) return null;
+        return TMDB_IMAGE_URL + trimmed;
+    }
+
+    public String buildPosterUrl(String posterPath) {
+        if (posterPath == null) return null;
+        String trimmed = posterPath.trim();
+        if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)) return null;
+        return TMDB_POSTER_W342_URL + trimmed;
+    }
+
+    public String buildProfileUrl(String profilePath) {
+        if (profilePath == null) return null;
+        String trimmed = profilePath.trim();
+        if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)) return null;
+        return TMDB_PROFILE_URL + trimmed;
     }
 
     //Fetching raw data for spinner setup
@@ -169,6 +235,153 @@ public class NetworkUtils {
                 callback.onSeriesProgressCalculated(progress, seriesInfo);
             }
         });
+    }
+
+    // Fetch credits for movie/tv
+    public void fetchCredits(int tmdbID, boolean isTv, String tag, JsonListener callback) {
+        String base = isTv ? TV_SERIES_INFO_URL : MOVIE_INFO_URL;
+        String url = base + tmdbID + "/credits?language=en-US";
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                response -> callback.onResponse(response),
+                error -> {
+                    error.printStackTrace();
+                    callback.onResponse(null);
+                }
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+        if (tag != null) request.setTag(tag);
+        queue.add(request);
+    }
+
+    // Fetch similar items for movie/tv
+    public void fetchSimilar(int tmdbID, boolean isTv, String tag, JsonListener callback) {
+        String base = isTv ? TV_SERIES_INFO_URL : MOVIE_INFO_URL;
+        String url = base + tmdbID + "/similar?language=en-US&page=1";
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                response -> callback.onResponse(response),
+                error -> {
+                    error.printStackTrace();
+                    callback.onResponse(null);
+                }
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+        if (tag != null) request.setTag(tag);
+        queue.add(request);
+    }
+
+    // Fetch external ids for movie/tv
+    public void fetchExternalIds(int tmdbID, boolean isTv, String tag, JsonListener callback) {
+        String base = isTv ? TV_SERIES_INFO_URL : MOVIE_INFO_URL;
+        String url = base + tmdbID + "/external_ids?language=en-US";
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                response -> callback.onResponse(response),
+                error -> {
+                    error.printStackTrace();
+                    callback.onResponse(null);
+                }
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+        if (tag != null) request.setTag(tag);
+        queue.add(request);
+    }
+
+    // Resolve TMDB id by IMDb id and detect media type
+    public void findByImdb(String imdbId, String tag, IdResolveListener callback) {
+        String url = FIND_BY_ID_URL + imdbId + "?external_source=imdb_id";
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                response -> {
+                    try {
+                        JSONArray movieResults = response.optJSONArray("movie_results");
+                        JSONArray tvResults = response.optJSONArray("tv_results");
+                        if (movieResults != null && movieResults.length() > 0) {
+                            JSONObject first = movieResults.optJSONObject(0);
+                            if (first != null) {
+                                callback.onResolved(first.optInt("id", -1), false);
+                                return;
+                            }
+                        }
+                        if (tvResults != null && tvResults.length() > 0) {
+                            JSONObject first = tvResults.optJSONObject(0);
+                            if (first != null) {
+                                callback.onResolved(first.optInt("id", -1), true);
+                                return;
+                            }
+                        }
+                        callback.onResolved(null, null);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        callback.onResolved(null, null);
+                    }
+                },
+                error -> {
+                    error.printStackTrace();
+                    callback.onResolved(null, null);
+                }
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+        if (tag != null) request.setTag(tag);
+        queue.add(request);
+    }
+
+    // Fetch OMDB details by IMDb id
+    public void fetchOmdbByImdb(String imdbId, String tag, JsonListener callback) {
+        if (imdbId == null || imdbId.isEmpty() || "null".equalsIgnoreCase(imdbId)) {
+            callback.onResponse(null);
+            return;
+        }
+        String url = OMDB_BASE_URL + "?apikey=" + OMDB_API_KEY + "&i=" + imdbId;
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                response -> callback.onResponse(response),
+                error -> {
+                    error.printStackTrace();
+                    callback.onResponse(null);
+                }
+        );
+        if (tag != null) request.setTag(tag);
+        queue.add(request);
     }
 
     public int calculateSeriesProgress(JSONObject series, int currentSeason, int currentEpisode) {

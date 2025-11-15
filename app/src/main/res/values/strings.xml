@@ -1,8 +1,4 @@
 <resources>
-    <!-- It's a good practice to put all your app's text in here.
-         That way, you can easily translate your app into other languages. -->
-
-    <!-- The name of the app. -->
     <string name="app_name">Flixer</string>
     <string name="default_web_client_id">YOUR_WEB_CLIENT_ID</string>
 
@@ -56,4 +52,6 @@
         <item>On Hold</item>
         <item>Dropped</item>
     </string-array>
+    <string name="cast_photo_content_description">Cast member photo</string>
+    <string name="similar_poster_content_description">Similar title poster</string>
 </resources>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="100dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginEnd="12dp">
+
+<!--https://www.youtube.com/watch?v=PSn8AAs_o3M-->
+<!--https://developer.android.com/reference/com/google/android/material/imageview/ShapeableImageView-->
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/iv_similar_poster"
+        android:layout_width="match_parent"
+        android:layout_height="140dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/loading"
+        android:contentDescription="@string/similar_poster_content_description"
+        android:layout_marginBottom="4dp"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Flixer.RoundedPoster" />
+
+    <TextView
+        android:id="@+id/tv_similar_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Movie Title"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+</LinearLayout>
