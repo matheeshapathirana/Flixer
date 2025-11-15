@@ -44,12 +44,24 @@
             android:gravity="center_vertical"
             android:layout_marginLeft="10dp"/>
 
-        <Spinner
-            android:id="@+id/filterSpinner"
-            android:layout_width="wrap_content"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/watchlist_fragment_status_layout"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="200dp"
             android:layout_height="wrap_content"
-            android:spinnerMode="dropdown"
-            android:entries="@array/watchlist_filters" />
+            android:layout_gravity="end"
+            android:hint="Status">
+
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/watchlist_fragment_status_dropdown"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:inputType="none"
+                android:focusable="false" />
+
+        </com.google.android.material.textfield.TextInputLayout>
 
     </LinearLayout>
 
