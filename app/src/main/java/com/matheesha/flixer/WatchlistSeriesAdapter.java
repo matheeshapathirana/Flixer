@@ -137,7 +137,7 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                 series.setStatus(selectedStatus);
 
                 //Update FireStore
-                databaseUtils.updateStatus(true, series.getDocumentId(), selectedStatus,
+                databaseUtils.updateStatus(false, series.getDocumentId(), selectedStatus,
                         new DatabaseUtils.UpdateStatusListener() {
                             @Override
                             public void onUpdateSuccess() {
