@@ -24,11 +24,15 @@
         android:layout_height="match_parent"
         android:background="@drawable/gradient_overlay" />
 
-    <!-- 
-    This is the main card that holds all our profile information. 
+    <!--
+    This is the main card that holds all our profile information.
     It uses the same style as the login screen for a consistent look and feel.
     -->
     <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+    <!-- REFERENCE: https://youtu.be/jOFLmKMOcK0?si=7n8Kh6Q9sm6TJgss -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_nav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="32dp"
@@ -95,5 +99,18 @@
         </LinearLayout>
 
     </com.google.android.material.card.MaterialCardView>
+        app:menu="@menu/bottom_nav_menu"/>
 
+    <!-- REFERENCE: https://youtu.be/jOFLmKMOcK0?si=7n8Kh6Q9sm6TJgss -->
+    <FrameLayout
+        android:id="@+id/frame_layout"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="2dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_nav"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+    </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
