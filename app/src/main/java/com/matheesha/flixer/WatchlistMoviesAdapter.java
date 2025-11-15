@@ -16,7 +16,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
+import com.google.android.material.textfield.TextInputLayout;
+import com.matheesha.flixer.utilities.DatabaseUtils;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -25,10 +27,12 @@ public class WatchlistMoviesAdapter extends RecyclerView.Adapter<WatchlistMovies
 
     Context context;
     ArrayList<WatchlistMovieModel> moviesWatchlist;
+    private DatabaseUtils databaseUtils;
 
-    public WatchlistMoviesAdapter(Context context, ArrayList<WatchlistMovieModel> moviesWatchlist) {
+    public WatchlistMoviesAdapter(Context context, ArrayList<WatchlistMovieModel> moviesWatchlist, DatabaseUtils databaseUtils) {
         this.context = context;
         this.moviesWatchlist = moviesWatchlist;
+        this.databaseUtils = databaseUtils;
     }
 
     @NonNull
@@ -42,13 +46,16 @@ public class WatchlistMoviesAdapter extends RecyclerView.Adapter<WatchlistMovies
 
     @Override
     public void onBindViewHolder(@NonNull WatchlistMoviesAdapter.MyViewHolder holder, int position) {
+        WatchlistMovieModel movie = moviesWatchlist.get(position);
+
         holder.title.setText(moviesWatchlist.get(position).getTitle());
         holder.progressBar.setProgress(moviesWatchlist.get(position).getProgress());
 
         //set the image using Picasso
         Picasso.get().load(moviesWatchlist.get(position).getPoster()).into(holder.poster);
 
-        //REFERENCE: ChatGPT
+        //REFERENCE: Deepseek - Upgraded spinner to Material 3 design
+        /*
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
                 context,
                 R.array.watch_statuses,
@@ -76,17 +83,18 @@ public class WatchlistMoviesAdapter extends RecyclerView.Adapter<WatchlistMovies
                     moviesWatchlist.get(position).setStatus(selectedStatus);
 
                     //Update FireStore
-                    FirebaseFirestore db = FirebaseFirestore.getInstance();
-                    db.collection("users")
-                            .document("zxG3kkJH4WwOu4elGsCx")
-                            .collection("watchlist_movies")
-                            .document(moviesWatchlist.get(position).getDocumentId())
-                            .update("status", selectedStatus)
-                            .addOnSuccessListener(success -> {
-                                Toast.makeText(context.getApplicationContext(), "Movie status updated successfully!", Toast.LENGTH_LONG).show();
-                            })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(context.getApplicationContext(), "Failed to update movie status!", Toast.LENGTH_LONG).show();
+                    databaseUtils.updateStatus(true, moviesWatchlist.get(position).getDocumentId(), selectedStatus,
+                            new DatabaseUtils.UpdateStatusListener() {
+                                @Override
+                                public void onUpdateSuccess() {
+                                    Toast.makeText(context, "Movie status updated successfully!", Toast.LENGTH_LONG).show();
+                                }
+
+                                @Override
+                                public void onUpdateFailure(Exception error) {
+                                    Toast.makeText(context, "Failed to update movie status!", Toast.LENGTH_LONG).show();
+                                    error.printStackTrace();
+                                }
                             });
                 }
 
@@ -95,6 +103,40 @@ public class WatchlistMoviesAdapter extends RecyclerView.Adapter<WatchlistMovies
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
 
+            }
+        });
+         */
+
+        ArrayAdapter<CharSequence> statusAdapter = ArrayAdapter.createFromResource(
+                context,
+                R.array.watch_statuses,
+                android.R.layout.simple_dropdown_item_1line
+        );
+        holder.statusDropdown.setAdapter(statusAdapter);
+        holder.statusDropdown.setText(movie.getStatus(), false);
+
+        holder.statusDropdown.setOnItemClickListener((parent, view, pos, id) -> {
+            String selectedStatus = parent.getItemAtPosition(pos).toString();
+
+            //Update the database if the selected status is different
+            if (!selectedStatus.equals(movie.getStatus())) {
+                //Update local model
+                movie.setStatus(selectedStatus);
+
+                //Update FireStore
+                databaseUtils.updateStatus(true, movie.getDocumentId(), selectedStatus,
+                        new DatabaseUtils.UpdateStatusListener() {
+                            @Override
+                            public void onUpdateSuccess() {
+                                Toast.makeText(context, "Movie status updated successfully!", Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onUpdateFailure(Exception error) {
+                                Toast.makeText(context, "Failed to update movie status!", Toast.LENGTH_SHORT).show();
+                                error.printStackTrace();
+                            }
+                        });
             }
         });
 
@@ -111,18 +153,17 @@ public class WatchlistMoviesAdapter extends RecyclerView.Adapter<WatchlistMovies
                         .setTitle("Remove from Watchlist")
                         .setMessage("Are you sure you want to remove " + movie.getTitle() + " from your watchlist?")
                         .setPositiveButton("Yes", (dialog, which) -> {
-                            FirebaseFirestore db = FirebaseFirestore.getInstance();
-                            db.collection("users")
-                                    .document("zxG3kkJH4WwOu4elGsCx")
-                                    .collection("watchlist_movies")
-                                    .document(movie.getDocumentId())
-                                    .delete()
-                                    .addOnSuccessListener(success -> {
-                                        Toast.makeText(context.getApplicationContext(), "Removed from watchlist!", Toast.LENGTH_LONG).show();
-                                    })
-                                    .addOnFailureListener(error -> {
-                                        Toast.makeText(context.getApplicationContext(), "Failed to remove from watchlist!", Toast.LENGTH_LONG).show();
-                                    });
+                            databaseUtils.deleteFromWatchlist(true, movie.getDocumentId(), new DatabaseUtils.DeleteListener() {
+                                @Override
+                                public void onDeleteSuccess() {
+                                    Toast.makeText(context, "Removed from wishlist!", Toast.LENGTH_LONG).show();
+                                }
+
+                                @Override
+                                public void onDeleteFailure(Exception error) {
+                                    Toast.makeText(context, "Failed to remove from watchlist!", Toast.LENGTH_LONG).show();
+                                }
+                            });
                         })
                         .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                         .show();
@@ -141,14 +182,16 @@ public class WatchlistMoviesAdapter extends RecyclerView.Adapter<WatchlistMovies
         ImageView poster, deleteBtn;
         TextView title;
         ProgressBar progressBar;
-        Spinner statusSpinner;
+        TextInputLayout statusLayout;
+        MaterialAutoCompleteTextView statusDropdown;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             poster = itemView.findViewById(R.id.movie_card_poster);
             title = itemView.findViewById(R.id.movie_card_title);
             progressBar = itemView.findViewById(R.id.movie_card_progressbar);
-            statusSpinner = itemView.findViewById(R.id.movie_card_status_spinner);
+            statusLayout = itemView.findViewById(R.id.movie_card_status_layout);
+            statusDropdown = itemView.findViewById(R.id.movie_card_status_dropdown);
             deleteBtn = itemView.findViewById(R.id.movie_card_delete_icon);
         }
     }

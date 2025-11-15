@@ -45,6 +45,10 @@ dependencies {
     implementation(libs.recyclerview)
     implementation(libs.viewpager2)
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.auth)
+    implementation(libs.credentials)
+    implementation(libs.credentials.play.services.auth)
+    implementation(libs.googleid)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -70,4 +74,5 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.4.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("androidx.fragment:fragment-ktx:1.7.1")
+    implementation("com.google.android.material:material:1.13.0")
 }

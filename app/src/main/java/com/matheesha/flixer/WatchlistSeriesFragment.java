@@ -1,6 +1,9 @@
 package com.matheesha.flixer;
 
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -8,33 +11,22 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.matheesha.flixer.utilities.DatabaseUtils;
+import com.matheesha.flixer.utilities.NetworkUtils;
+import com.matheesha.flixer.utilities.MediaCacheManager;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 
-public class WatchlistSeriesFragment extends Fragment {
+public class WatchlistSeriesFragment extends Fragment implements DatabaseUtils.WatchlistListener {
 
     //Interface to update the entry count in WatchlistFragment
     public interface OnItemCountChangeListener {
@@ -46,13 +38,8 @@ public class WatchlistSeriesFragment extends Fragment {
     WatchlistSeriesAdapter adapter;
     private OnItemCountChangeListener listener;
     private ListenerRegistration seriesRegistration;
-
-    //API Endpoints to fetch posters
-    public final String FIND_BY_ID_URL = "https://api.themoviedb.org/3/find/";
-    public final String TMDB_IMAGE_URL = "https://image.tmdb.org/t/p/original";
-    public final String TV_SERIES_INFO_URL = "https://api.themoviedb.org/3/tv/";
-    public final String TMDB_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo";
     RequestQueue queue;
+    DatabaseUtils databaseUtils;
 
     public void setOnItemCountChangeListener(WatchlistSeriesFragment.OnItemCountChangeListener listener) {
         this.listener = listener;
@@ -71,10 +58,11 @@ public class WatchlistSeriesFragment extends Fragment {
 
         RecyclerView rvSeriesWatchlist = view.findViewById(R.id.series_watchlist_recyclerView);
         queue = Volley.newRequestQueue(requireContext());
+        databaseUtils = DatabaseUtils.getInstance();
 
         setupSeriesWatchlist();
 
-        adapter = new WatchlistSeriesAdapter(requireContext(), filteredSeries);
+        adapter = new WatchlistSeriesAdapter(requireContext(), filteredSeries, databaseUtils, new NetworkUtils(queue));
         rvSeriesWatchlist.setAdapter(adapter);
         rvSeriesWatchlist.setLayoutManager(new LinearLayoutManager(requireContext()));
     }
@@ -82,115 +70,89 @@ public class WatchlistSeriesFragment extends Fragment {
     private void setupSeriesWatchlist() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        seriesRegistration = db.collection("users")
-                .document("zxG3kkJH4WwOu4elGsCx")
-                .collection("watchlist_series")
-                .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                    @Override
-                    public void onEvent(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException error) {
-                        seriesWatchlist.clear();
+        seriesRegistration = databaseUtils.setupWatchlistListener(false, this);
+    }
 
-                        if (error != null) {
-                            error.printStackTrace();
-                            return;
-                        }
+    @Override
+    public void onWatchlistUpdate(@Nullable QuerySnapshot queryDocumentSnapshots, @Nullable FirebaseFirestoreException error) {
+        seriesWatchlist.clear();
 
-                        if (queryDocumentSnapshots == null) return;
+        if (error != null) {
+            error.printStackTrace();
+            return;
+        }
 
-                        queryDocumentSnapshots.forEach(doc -> {
-                            String title = doc.getString("title");
-                            String status = doc.getString("status");
-                            int currentSeason = doc.getLong("current_season").intValue();
-                            int currentEpisode = doc.getLong("current_episode").intValue();
-                            int tmdb_id = doc.getLong("tmdb_id").intValue();
-                            String docId = doc.getId();
-                            int progress = calculateProgress(tmdb_id, currentSeason, currentEpisode);
+        if (queryDocumentSnapshots == null) return;
 
-                            //Fetching and setting the movie poster
-                            WatchlistSeriesModel model = new WatchlistSeriesModel(null, title, progress, currentSeason, currentEpisode, status, tmdb_id, docId);
+        queryDocumentSnapshots.forEach(doc -> {
+            String title = doc.getString("title");
+            String status = doc.getString("status");
+            String docId = doc.getId();
 
-                            //Calculate and set progress early if cache is available
-                            JSONObject seriesJSON = SeriesCacheManager.getSeries(tmdb_id);
-                            if (seriesJSON != null) {
-                                int calculatedProgress = calculateProgress(tmdb_id, currentSeason, currentEpisode);
-                                model.setProgress(calculatedProgress);
-                            }
+            Long currentSeasonNumber = doc.getLong("current_season");
+            int currentSeason = (currentSeasonNumber != null) ? currentSeasonNumber.intValue() : 1;
 
-                            seriesWatchlist.add(model);
+            Long currentEpisodeNumber = doc.getLong("current_episode");
+            int currentEpisode = (currentEpisodeNumber != null) ? currentEpisodeNumber.intValue() : 1;
 
-                            //REFERENCE: ChatGPT - fetch the actual poster and progress asynchronously
-                            fetchSeriesPoster(doc.getId(), new WatchlistSeriesFragment.PosterFetchListener() {
-                                @Override
-                                public void onPosterFetched(String posterURL) {
-                                    if (posterURL != null) {
-                                        model.setPoster(posterURL);
-                                    }
+            Long tmdbNumber = doc.getLong("tmdb_id");
+            int tmdb_id = tmdbNumber.intValue();
 
-                                    //If progress wasn't calculated because of a missing cache, calculate it after fetching
-                                    if (!SeriesCacheManager.contains(tmdb_id)) {
-                                        String seriesURL = TV_SERIES_INFO_URL + tmdb_id;
-                                        JsonObjectRequest request = new JsonObjectRequest(
-                                                Request.Method.GET,
-                                                seriesURL,
-                                                null,
-                                                response -> {
-                                                    SeriesCacheManager.putSeries(tmdb_id, response);
-                                                    int updatedProgress = calculateProgress(tmdb_id, currentSeason, currentEpisode);
-                                                    model.setProgress(updatedProgress);
 
-                                                    int position = -1;
-                                                    for (int i=0; i<filteredSeries.size(); i++) {
-                                                        if (filteredSeries.get(i).getDocumentId().equals(docId)) {
-                                                            position = i;
-                                                            break;
-                                                        }
-                                                    }
+            NetworkUtils networkUtils = new NetworkUtils(queue);
+            int progress = 0;
+            String posterURL = null;
 
-                                                    if (position != -1) {
-                                                        adapter.notifyItemChanged(position);
-                                                    }
-                                                },
-                                                error -> {
-                                                    error.printStackTrace();
-                                                }
-                                        ) {
-                                            @Override
-                                            public Map<String, String> getHeaders() throws AuthFailureError {
-                                                Map<String, String> headers = new HashMap<>();
-                                                headers.put("accept", "application/json");
-                                                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
-                                                return headers;
-                                            }
-                                        };
+            //Calculate progress if cache is available
+            JSONObject seriesJSON = MediaCacheManager.getSeries(tmdb_id);
+            if (seriesJSON != null) {
+                posterURL = networkUtils.extractMoviePosterURL(seriesJSON);
+                progress = networkUtils.calculateSeriesProgress(seriesJSON, currentSeason, currentEpisode);
+            }
 
-                                        queue.add(request);
-                                    } else {
-                                        int position = -1;
-                                        for (int i=0; i<filteredSeries.size(); i++) {
-                                            if (filteredSeries.get(i).getDocumentId().equals(docId)) {
-                                                position = i;
-                                                break;
-                                            }
-                                        }
+            //Fetching and setting the movie poster
+            WatchlistSeriesModel model = new WatchlistSeriesModel(posterURL, title, progress, currentSeason, currentEpisode, status, tmdb_id, docId);
+            seriesWatchlist.add(model);
 
-                                        if (position != -1) {
-                                            adapter.notifyItemChanged(position);
-                                        }
-                                    }
+            //REFERENCE: ChatGPT - fetch the actual poster and progress asynchronously
+            if (seriesJSON == null) {
+                networkUtils.fetchSeriesInfoWithProgress(tmdb_id, currentSeason, currentEpisode,
+                        new NetworkUtils.SeriesProgressListener() {
+                            @Override
+                            public void onSeriesProgressCalculated(int progress, JSONObject series) {
+                                String posterURL = networkUtils.extractMoviePosterURL(series);
+                                if (posterURL != null) {
+                                    model.setPoster(posterURL);
                                 }
-                            });
+                                model.setProgress(progress);
+                                notifyItemChanged(docId);
+                            }
                         });
+            }
+        });
 
-                        filteredSeries.clear();
-                        filteredSeries.addAll(seriesWatchlist);
-                        adapter.notifyDataSetChanged();
+        filteredSeries.clear();
+        filteredSeries.addAll(seriesWatchlist);
+        adapter.notifyDataSetChanged();
 
-                        //Notify the parent fragment about the item count
-                        if (listener != null) {
-                            listener.onItemCountChanged(seriesWatchlist.size());
-                        }
-                    }
-                });
+        //Notify the parent fragment about the item count
+        if (listener != null) {
+            listener.onItemCountChanged(seriesWatchlist.size());
+        }
+    }
+
+    public void notifyItemChanged(String documentId) {
+        int position = -1;
+        for (int i=0; i<filteredSeries.size(); i++) {
+            if (filteredSeries.get(i).getDocumentId().equals(documentId)) {
+                position = i;
+                break;
+            }
+        }
+
+        if (position != -1) {
+            adapter.notifyItemChanged(position);
+        }
     }
 
     //Filter by logic
@@ -227,79 +189,4 @@ public class WatchlistSeriesFragment extends Fragment {
         return filteredSeries.size();
     }
 
-    public interface PosterFetchListener {
-        void onPosterFetched(String posterURL);
-    }
-    public void fetchSeriesPoster(String imdbID, PosterFetchListener callback) {
-        String singleSeriesEndpoint = FIND_BY_ID_URL + imdbID + "?external_source=imdb_id";
-        JsonObjectRequest seriesRequest =
-                new JsonObjectRequest(Request.Method.GET, singleSeriesEndpoint, null,
-                        new Response.Listener<JSONObject>() {
-                            @Override
-                            public void onResponse(JSONObject response) {
-                                try {
-                                    if (response.has("tv_results")) {
-                                        JSONObject series = response.getJSONArray("tv_results").getJSONObject(0);
-                                        String posterPath = series.getString("poster_path");
-                                        String fullPosterURL = TMDB_IMAGE_URL + posterPath;
-                                        callback.onPosterFetched(fullPosterURL);
-                                    } else {
-                                        callback.onPosterFetched(null);
-                                    }
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                    callback.onPosterFetched(null);
-                                }
-                            }
-                        }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError volleyError) {
-                        String error = volleyError.toString();
-                        System.out.println(error);
-                    }
-                }) {
-                    @Override
-                    public Map<String, String> getHeaders() throws AuthFailureError {
-                        Map<String, String> headers = new HashMap<String, String>();
-                        headers.put("accept", "application/json");
-                        headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
-                        return headers;
-                    }
-                };
-
-        queue.add(seriesRequest);
-    }
-
-    //Method to calculate series progress
-    private int calculateProgress(int tmdbId, int currentSeason, int currentEpisode) {
-        JSONObject series = SeriesCacheManager.getSeries(tmdbId);
-
-        if (series == null) {
-            return 0;
-        }
-
-        try {
-            JSONArray seasons = series.getJSONArray("seasons");
-            int totalEpisodes = 0;
-            int totalWatched = 0;
-
-            for (int i=1; i<seasons.length(); i++) {
-                JSONObject season = seasons.getJSONObject(i);
-                if (season.getInt("season_number") == 0) continue; //skip specials
-
-                if (season.getInt("season_number") < currentSeason) {
-                    totalWatched += season.getInt("episode_count");
-                }
-
-                totalEpisodes += season.getInt("episode_count");
-            }
-
-            totalWatched += currentEpisode;
-
-            return (int)(((double) totalWatched / totalEpisodes) * 100);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return 0;
-        }
-    }
 }

@@ -17,6 +17,8 @@ import android.widget.TextView;
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
+import com.google.android.material.textfield.TextInputLayout;
 
 
 public class WatchlistFragment extends Fragment {
@@ -25,7 +27,8 @@ public class WatchlistFragment extends Fragment {
     private ViewPager2 watchlist_viewPager;
     private ViewPagerAdapter viewPagerAdapter;
     private TextView entryCount;
-    private Spinner statusFilter;
+    private TextInputLayout statusLayout;
+    private MaterialAutoCompleteTextView statusDropdown;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -43,7 +46,9 @@ public class WatchlistFragment extends Fragment {
         watchlist_viewPager = view.findViewById(R.id.watchlist_viewPager);
 
         entryCount = view.findViewById(R.id.entryCount);
-        statusFilter = view.findViewById(R.id.filterSpinner);
+
+        statusLayout = view.findViewById(R.id.watchlist_fragment_status_layout);
+        statusDropdown = view.findViewById(R.id.watchlist_fragment_status_dropdown);
 
         viewPagerAdapter = new ViewPagerAdapter(this);
         watchlist_viewPager.setAdapter(viewPagerAdapter);
@@ -86,19 +91,23 @@ public class WatchlistFragment extends Fragment {
         });
 
         //REFERENCE: ChatGPT
-        //Handling statusSpinner filtering
+        //Handling statusSpinner filtering - Updated for MaterialAutoCompleteTextView
         ArrayAdapter<CharSequence> filterAdapter = ArrayAdapter.createFromResource(
                 getContext(),
                 R.array.watchlist_filters,
                 android.R.layout.simple_spinner_item
         );
-        filterAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        statusFilter.setAdapter(filterAdapter);
+        statusDropdown.setAdapter(filterAdapter);
 
-        statusFilter.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        //Set initial text to first item in the array
+        if (filterAdapter.getCount() > 0) {
+            statusDropdown.setText(filterAdapter.getItem(0).toString(), false);
+        }
+
+        statusDropdown.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                String selectedStatus = adapterView.getItemAtPosition(i).toString();
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                String selectedStatus = adapterView.getItemAtPosition(position).toString();
 
                 int currentTab = watchlist_viewPager.getCurrentItem();
                 if (currentTab == 0) {
@@ -106,11 +115,6 @@ public class WatchlistFragment extends Fragment {
                 } else {
                     viewPagerAdapter.getSeriesFragment().filterByStatus(selectedStatus);
                 }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-
             }
         });
     }

@@ -5,13 +5,15 @@ public class WatchlistMovieModel {
     private String title;
     private int progress;
     private String status;
+    private int tmdb_id;
     private String documentId;
 
-    public WatchlistMovieModel(String poster, String title, int progress, String status, String documentId) {
+    public WatchlistMovieModel(String poster, String title, int progress, String status, int tmdb_id, String documentId) {
         this.poster = poster;
         this.title = title;
         this.progress = progress;
         this.status = status;
+        this.tmdb_id = tmdb_id;
         this.documentId = documentId;
     }
 
@@ -29,6 +31,10 @@ public class WatchlistMovieModel {
 
     public String getStatus() {
         return status;
+    }
+
+    public int getTmdb_id() {
+        return tmdb_id;
     }
 
     public String getDocumentId() {

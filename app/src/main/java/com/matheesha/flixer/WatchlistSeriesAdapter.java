@@ -3,11 +3,13 @@ package com.matheesha.flixer;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -16,32 +18,30 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
+import com.google.android.material.textfield.TextInputLayout;
+import com.matheesha.flixer.utilities.DatabaseUtils;
+import com.matheesha.flixer.utilities.NetworkUtils;
+import com.matheesha.flixer.utilities.MediaCacheManager;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeriesAdapter.MyViewHolder> {
     Context context;
     ArrayList<WatchlistSeriesModel> seriesWatchlist;
+    private DatabaseUtils databaseUtils;
+    private NetworkUtils networkUtils;
 
-    //Variables for network request
-    String TMDB_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo";
-    String TMDB_SERIES_INFO_URL = "https://api.themoviedb.org/3/tv/";
-
-    public WatchlistSeriesAdapter(Context context, ArrayList<WatchlistSeriesModel> seriesWatchlist) {
+    public WatchlistSeriesAdapter(Context context, ArrayList<WatchlistSeriesModel> seriesWatchlist, DatabaseUtils databaseUtils, NetworkUtils networkUtils) {
         this.context = context;
         this.seriesWatchlist = seriesWatchlist;
+        this.databaseUtils = databaseUtils;
+        this.networkUtils = networkUtils;
     }
 
     @NonNull
@@ -66,6 +66,9 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
         //TO DO: Create the season and episode spinners dynamically
 
         //-------------- Status Spinner ---------------------
+
+        /* -- Spinner Code - Replaced with Material 3 later
+
         ArrayAdapter<CharSequence> statusSpinnerAdapter = ArrayAdapter.createFromResource(
                 context,
                 R.array.watch_statuses,
@@ -92,17 +95,18 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                     seriesWatchlist.get(position).setStatus(selectedStatus);
 
                     //Update FireStore
-                    FirebaseFirestore db = FirebaseFirestore.getInstance();
-                    db.collection("users")
-                            .document("zxG3kkJH4WwOu4elGsCx")
-                            .collection("watchlist_series")
-                            .document(seriesWatchlist.get(position).getDocumentId())
-                            .update("status", selectedStatus)
-                            .addOnSuccessListener(success -> {
-                                Toast.makeText(context.getApplicationContext(), "Movie status updated successfully!", Toast.LENGTH_LONG).show();
-                            })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(context.getApplicationContext(), "Failed to update movie status!", Toast.LENGTH_LONG).show();
+                    databaseUtils.updateStatus(false, seriesWatchlist.get(position).getDocumentId(), selectedStatus,
+                            new DatabaseUtils.UpdateStatusListener() {
+                                @Override
+                                public void onUpdateSuccess() {
+                                    Toast.makeText(context, "Series status updated successfully!", Toast.LENGTH_LONG).show();
+                                }
+
+                                @Override
+                                public void onUpdateFailure(Exception error) {
+                                    Toast.makeText(context, "Failed to update series status!", Toast.LENGTH_LONG).show();
+                                    error.printStackTrace();
+                                }
                             });
                 }
             }
@@ -113,14 +117,49 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
             }
         });
 
+         */
+
+        ArrayAdapter<CharSequence> statusAdapter = ArrayAdapter.createFromResource(
+                context,
+                R.array.watch_statuses,
+                android.R.layout.simple_dropdown_item_1line
+        );
+
+        holder.statusDropdown.setAdapter(statusAdapter);
+        holder.statusDropdown.setText(series.getStatus(), false);
+
+        holder.statusDropdown.setOnItemClickListener((parent, view, pos, id) -> {
+            String selectedStatus = parent.getItemAtPosition(pos).toString();
+
+            //Update the database if the selected status is different
+            if (!selectedStatus.equals(series.getStatus())) {
+                //Update local model
+                series.setStatus(selectedStatus);
+
+                //Update FireStore
+                databaseUtils.updateStatus(false, series.getDocumentId(), selectedStatus,
+                        new DatabaseUtils.UpdateStatusListener() {
+                            @Override
+                            public void onUpdateSuccess() {
+                                Toast.makeText(context, "Series status updated successfully!", Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onUpdateFailure(Exception error) {
+                                Toast.makeText(context, "Failed to update series status!", Toast.LENGTH_SHORT).show();
+                                error.printStackTrace();
+                            }
+                        });
+            }
+        });
+
         //-------------- Season and Episode Spinners --------------------
         int tmdb_id = seriesWatchlist.get(position).getTmdb_id();
-        String seriesURL = TMDB_SERIES_INFO_URL + tmdb_id;
 
         //REFERENCE: ChatGPT - with my own additions
         Runnable setupSpinners = () -> {
             try {
-                JSONObject response = SeriesCacheManager.getSeries(tmdb_id);
+                JSONObject response = MediaCacheManager.getSeries(tmdb_id);
                 if (response == null)  return;
 
                 ArrayList<Integer> seasonNumbers = new ArrayList<>();
@@ -128,7 +167,7 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
 
                 JSONArray seasonsArray = response.getJSONArray("seasons");
 
-                for (int i=1; i < seasonsArray.length(); i++) {
+                for (int i=0; i < seasonsArray.length(); i++) {
                     JSONObject season = seasonsArray.getJSONObject(i);
                     int seasonNumber = season.getInt("season_number");
                     if (seasonNumber == 0) continue; //skip specials
@@ -138,6 +177,7 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                     episodeCounts.add(episodeCount);
                 }
 
+                /*
                 ArrayAdapter<Integer> seasonAdapter = new ArrayAdapter<>(
                         context,
                         android.R.layout.simple_spinner_item,
@@ -150,7 +190,7 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                     @Override
                     public void onItemSelected(AdapterView<?> adapterView, View view, int seasonPosition, long l) {
                         int episodeCount = episodeCounts.get(seasonPosition);
-                        String selectedSeason = adapterView.getItemAtPosition(seasonPosition).toString();
+                        int selectedSeason = Integer.parseInt(adapterView.getItemAtPosition(seasonPosition).toString());
 
                         ArrayList<Integer> episodes = new ArrayList<>();
 
@@ -170,23 +210,24 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                         holder.episodeSpinner.setSelection(episodeSpinnerPosition);
 
                         //--- NOT CHATGPT - Updating database on episode or season selections
-                        if (Integer.parseInt(selectedSeason) != seriesWatchlist.get(position).getCurrentSeason()) {
+                        if (selectedSeason != seriesWatchlist.get(position).getCurrentSeason()) {
                             //Update local model
-                            seriesWatchlist.get(position).setCurrentSeason(Integer.parseInt(selectedSeason));
+                            seriesWatchlist.get(position).setCurrentSeason(selectedSeason);
 
                             //Update FireStore
-                            FirebaseFirestore db = FirebaseFirestore.getInstance();
-                            db.collection("users")
-                                    .document("zxG3kkJH4WwOu4elGsCx")
-                                    .collection("watchlist_series")
-                                    .document(seriesWatchlist.get(position).getDocumentId())
-                                    .update("current_season", Integer.parseInt(selectedSeason))
-                                    .addOnSuccessListener(success -> {
-                                        Toast.makeText(context.getApplicationContext(), "Season update successful!", Toast.LENGTH_SHORT).show();
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Toast.makeText(context.getApplicationContext(), "Failed to update season.", Toast.LENGTH_SHORT).show();
-                                    });
+                            databaseUtils.updateSeriesProgress(series.getDocumentId(), selectedSeason, series.getCurrentEpisode(),
+                                    new DatabaseUtils.UpdateStatusListener() {
+                                @Override
+                                public void onUpdateSuccess() {
+                                    Toast.makeText(context, "Season update successfully!", Toast.LENGTH_LONG).show();
+                                }
+
+                                @Override
+                                public void onUpdateFailure(Exception error) {
+                                    Toast.makeText(context, "Failed to update season!", Toast.LENGTH_LONG).show();
+                                    error.printStackTrace();
+                                }
+                            });
                         }
                     }
 
@@ -197,34 +238,81 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                 });
                 //END REFERENCE
 
-                //set the season and episode spinners to the current season and episode in the database
-                int seasonSpinnerPosition = seasonAdapter.getPosition(seriesWatchlist.get(position).getCurrentSeason());
-                holder.seasonSpinner.setSelection(seasonSpinnerPosition);
+              */
+                //REFERENCE: Deepseek - Handling Season Updates
+                holder.seasonButton.setText("Season " + series.getCurrentSeason()); //set initial text
+
+                holder.seasonButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        PopupMenu seasonMenu = new PopupMenu(context, holder.seasonButton);
+
+                        for (int i=0; i < seasonNumbers.size(); i++) {
+                            seasonMenu.getMenu().add(0, i, 0, "Season " + seasonNumbers.get(i));
+                        }
+
+                        seasonMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                            @Override
+                            public boolean onMenuItemClick(MenuItem menuItem) {
+                                int seasonIndex = menuItem.getItemId();
+                                int selectedSeason = seasonNumbers.get(seasonIndex);
+
+                                if (selectedSeason != series.getCurrentSeason()) {
+                                    holder.seasonButton.setText("Season " + selectedSeason);
+                                    series.setCurrentSeason(selectedSeason);
+
+                                    //Reset episode button when the season changes
+                                    holder.episodeButton.setText("Episode 1");
+                                    series.setCurrentEpisode(1);
+
+                                    databaseUtils.updateSeriesProgress(series.getDocumentId(), selectedSeason, 1,
+                                            new DatabaseUtils.UpdateStatusListener() {
+                                                @Override
+                                                public void onUpdateSuccess() {
+                                                    Toast.makeText(context, "Season updated successfully!", Toast.LENGTH_SHORT).show();
+                                                }
+
+                                                @Override
+                                                public void onUpdateFailure(Exception error) {
+                                                    Toast.makeText(context, "Failed to update season!", Toast.LENGTH_SHORT).show();
+                                                    error.printStackTrace();
+                                                }
+                                            });
+                                }
+
+                                return true;
+                            }
+                        });
+                        seasonMenu.show();
+                    }
+                });
 
                 //Handling episode count updates
+                /*
                 holder.episodeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
                     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                        String selectedEpisode = adapterView.getItemAtPosition(i).toString();
+                        int selectedEpisode = Integer.parseInt(adapterView.getItemAtPosition(i).toString());
 
                         //Only update Firestore if the value actually changed
-                        if (Integer.parseInt(selectedEpisode) != seriesWatchlist.get(position).getCurrentEpisode()) {
+                        if (selectedEpisode != seriesWatchlist.get(position).getCurrentEpisode()) {
                             //Update local model
-                            seriesWatchlist.get(position).setStatus(selectedEpisode);
+                            seriesWatchlist.get(position).setCurrentEpisode(selectedEpisode);
 
                             //Update FireStore
-                            FirebaseFirestore db = FirebaseFirestore.getInstance();
-                            db.collection("users")
-                                    .document("zxG3kkJH4WwOu4elGsCx")
-                                    .collection("watchlist_series")
-                                    .document(seriesWatchlist.get(position).getDocumentId())
-                                    .update("current_episode", Integer.parseInt(selectedEpisode))
-                                    .addOnSuccessListener(success -> {
-                                        Toast.makeText(context.getApplicationContext(), "Episode update successful!", Toast.LENGTH_SHORT).show();
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Toast.makeText(context.getApplicationContext(), "Episode update failed.", Toast.LENGTH_SHORT).show();
-                                    });
+                            databaseUtils.updateSeriesProgress(series.getDocumentId(), series.getCurrentSeason(), selectedEpisode,
+                                    new DatabaseUtils.UpdateStatusListener() {
+                                @Override
+                                public void onUpdateSuccess() {
+                                    Toast.makeText(context, "Episode update successful!", Toast.LENGTH_LONG).show();
+                                }
+
+                                @Override
+                                public void onUpdateFailure(Exception error) {
+                                    Toast.makeText(context, "Failed to update episode!", Toast.LENGTH_LONG).show();
+                                    error.printStackTrace();
+                                }
+                            });
                         }
                     }
 
@@ -234,39 +322,75 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                     }
                 });
 
+                 */
+                holder.episodeButton.setText("Episode " + series.getCurrentEpisode()); //set initial text
+
+                holder.episodeButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        PopupMenu episodeMenu = new PopupMenu(context, holder.episodeButton);
+
+                        int currentSeasonIndex = seasonNumbers.indexOf(series.getCurrentSeason());
+
+                        if (currentSeasonIndex != -1) {
+                            int episodeCount = episodeCounts.get(currentSeasonIndex);
+                            episodeMenu.getMenu().clear();
+
+                            for (int episodeNum = 1; episodeNum <= episodeCount; episodeNum++) {
+                                episodeMenu.getMenu().add(0, episodeNum, 0, "Episode " + episodeNum);
+                            }
+                        }
+
+                        episodeMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                            @Override
+                            public boolean onMenuItemClick(MenuItem menuItem) {
+                                int selectedEpisode = menuItem.getItemId();
+
+                                if (selectedEpisode != series.getCurrentEpisode()) {
+                                    holder.episodeButton.setText("Episode " + selectedEpisode);
+                                    series.setCurrentEpisode(selectedEpisode);
+
+                                    databaseUtils.updateSeriesProgress(series.getDocumentId(), series.getCurrentSeason(), selectedEpisode,
+                                            new DatabaseUtils.UpdateStatusListener() {
+                                                @Override
+                                                public void onUpdateSuccess() {
+                                                    Toast.makeText(context, "Episode updated successfully!", Toast.LENGTH_SHORT).show();
+                                                }
+
+                                                @Override
+                                                public void onUpdateFailure(Exception error) {
+                                                    Toast.makeText(context, "Failed to update episode!", Toast.LENGTH_SHORT).show();
+                                                    error.printStackTrace();
+                                                }
+                                            });
+                                }
+
+                                return true;
+                            }
+                        });
+                        episodeMenu.show();
+                    }
+                });
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
         };
 
         //If cached, skip the network call
-        if (SeriesCacheManager.contains(tmdb_id)) {
+        if (MediaCacheManager.contains(tmdb_id)) {
             setupSpinners.run();
         } else {
-            RequestQueue queue = Volley.newRequestQueue(context);
-            JsonObjectRequest request = new JsonObjectRequest(
-                    Request.Method.GET,
-                    seriesURL,
-                    null,
-                    response -> {
-                        //Cache it for next time
-                        SeriesCacheManager.putSeries(tmdb_id, response);
-                        setupSpinners.run();
-                    },
-                    volleyError -> {
-                        volleyError.printStackTrace();
-                        Toast.makeText(context, "Failed to load season information", Toast.LENGTH_SHORT).show();
-                    }
-            ) {
+            networkUtils.fetchSeriesInfoByTMDB(tmdb_id, new NetworkUtils.SeriesInfoListener() {
                 @Override
-                public Map<String, String> getHeaders() throws AuthFailureError {
-                    Map<String, String> headers = new HashMap<String, String>();
-                    headers.put("accept", "application/json");
-                    headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
-                    return headers;
+                public void onSeriesInfoFetched(JSONObject seriesInfo) {
+                    if (seriesInfo != null) {
+                        setupSpinners.run();
+                    } else {
+                        Toast.makeText(context, "Failed to load season information", Toast.LENGTH_LONG).show();
+                    }
                 }
-            };
-            queue.add(request);
+            });
         }
 
         //-------------- Delete Button ----------------------
@@ -283,17 +407,18 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                         .setTitle("Remove from Watchlist")
                         .setMessage("Are you sure you want to remove " + series.getTitle() + " from your watchlist?")
                         .setPositiveButton("Yes", (dialog, which) -> {
-                            FirebaseFirestore db = FirebaseFirestore.getInstance();
-                            db.collection("users")
-                                    .document("zxG3kkJH4WwOu4elGsCx")
-                                    .collection("watchlist_series")
-                                    .document(series.getDocumentId())
-                                    .delete()
-                                    .addOnSuccessListener(success -> {
-                                        Toast.makeText(context.getApplicationContext(), "Removed from watchlist!", Toast.LENGTH_LONG).show();
-                                    })
-                                    .addOnFailureListener(error -> {
-                                        Toast.makeText(context.getApplicationContext(), "Failed to remove from watchlist!", Toast.LENGTH_LONG).show();
+                            databaseUtils.deleteFromWatchlist(false, series.getDocumentId(),
+                                    new DatabaseUtils.DeleteListener() {
+                                        @Override
+                                        public void onDeleteSuccess() {
+                                            Toast.makeText(context, "Removed from Watchlist!", Toast.LENGTH_LONG).show();
+                                        }
+
+                                        @Override
+                                        public void onDeleteFailure(Exception error) {
+                                            Toast.makeText(context, "Failed to remove series from watchlist!", Toast.LENGTH_LONG).show();
+                                            error.printStackTrace();
+                                        }
                                     });
                         })
                         .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
@@ -312,16 +437,19 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
         ImageView poster, deleteBtn;
         TextView title;
         ProgressBar progressBar;
-        Spinner seasonSpinner, episodeSpinner, statusSpinner;
+        MaterialButton seasonButton, episodeButton;
+        TextInputLayout statusLayout;
+        MaterialAutoCompleteTextView statusDropdown;
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             poster = itemView.findViewById(R.id.tv_card_poster);
             deleteBtn = itemView.findViewById(R.id.tv_card_delete_icon);
             title = itemView.findViewById(R.id.tv_card_title);
             progressBar = itemView.findViewById(R.id.tv_card_progressbar);
-            seasonSpinner = itemView.findViewById(R.id.tv_card_season_spinner);
-            episodeSpinner = itemView.findViewById(R.id.tv_card_episode_spinner);
-            statusSpinner = itemView.findViewById(R.id.tv_card_status_spinner);
+            seasonButton = itemView.findViewById(R.id.tv_card_season_button);
+            episodeButton = itemView.findViewById(R.id.tv_card_episode_button);
+            statusLayout = itemView.findViewById(R.id.tv_card_status_layout);
+            statusDropdown = itemView.findViewById(R.id.tv_card_status_dropdown);
         }
     }
 }
