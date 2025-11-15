@@ -323,24 +323,30 @@ public class WatchlistSeriesAdapter extends RecyclerView.Adapter<WatchlistSeries
                 });
 
                  */
-                holder.episodeButton.setText("Episode " + series.getCurrentSeason()); //set initial text
+                holder.episodeButton.setText("Episode " + series.getCurrentEpisode()); //set initial text
 
                 holder.episodeButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        PopupMenu episodeMenu = new PopupMenu(context, holder.seasonButton);
+                        PopupMenu episodeMenu = new PopupMenu(context, holder.episodeButton);
 
-                        for (int i=0; i < episodeCounts.size(); i++) {
-                            episodeMenu.getMenu().add(0, i, 0, "Episode " + episodeCounts.get(i));
+                        int currentSeasonIndex = seasonNumbers.indexOf(series.getCurrentSeason());
+
+                        if (currentSeasonIndex != -1) {
+                            int episodeCount = episodeCounts.get(currentSeasonIndex);
+                            episodeMenu.getMenu().clear();
+
+                            for (int episodeNum = 1; episodeNum <= episodeCount; episodeNum++) {
+                                episodeMenu.getMenu().add(0, episodeNum, 0, "Episode " + episodeNum);
+                            }
                         }
 
                         episodeMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                             @Override
                             public boolean onMenuItemClick(MenuItem menuItem) {
-                                int episodeIndex = menuItem.getItemId();
-                                int selectedEpisode = episodeCounts.get(episodeIndex);
+                                int selectedEpisode = menuItem.getItemId();
 
-                                if (selectedEpisode != series.getCurrentSeason()) {
+                                if (selectedEpisode != series.getCurrentEpisode()) {
                                     holder.episodeButton.setText("Episode " + selectedEpisode);
                                     series.setCurrentEpisode(selectedEpisode);
 

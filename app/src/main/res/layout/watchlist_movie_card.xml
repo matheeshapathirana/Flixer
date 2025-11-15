@@ -64,14 +64,14 @@
                 android:progress="50"
                 android:layout_marginBottom="16dp"
                 android:progressTint="?attr/colorPrimary"
-                android:progressBackgroundTint="?attr/colorSurfaceVariant"/>
+                android:progressBackgroundTint="?attr/colorAccent"/>
 
 
             <!-- REFERENCE: DEEPSEEK - upgrading the spinner to Material 3 -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/movie_card_status_layout"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="150dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
                 android:hint="Status">
