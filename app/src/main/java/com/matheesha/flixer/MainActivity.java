@@ -31,7 +31,20 @@ public class MainActivity extends AppCompatActivity {
 
         Button openDetails = findViewById(R.id.btn_open_details);
         if (openDetails != null) {
-            openDetails.setOnClickListener(v -> startActivity(new Intent(this, FilmDetailsActivity.class)));
+            openDetails.setOnClickListener(v -> {
+                int tmdbId = 550;
+                //950387 - Minecraft Movie
+                //1328049 - Sinhala Movie
+                // 550 - Fight Club
+                // 603 - The Matrix
+                // 497698 - Black Widow
+                //100088 - tlou
+                boolean isTv = false;
+                Intent intent = new Intent(this, FilmDetailsActivity.class);
+                intent.putExtra("tmdb_id", tmdbId);
+                intent.putExtra("is_tv", isTv);
+                startActivity(intent);
+            });
         }
     }
 }

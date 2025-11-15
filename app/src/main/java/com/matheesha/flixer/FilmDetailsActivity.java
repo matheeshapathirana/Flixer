@@ -61,13 +61,7 @@ public class FilmDetailsActivity extends AppCompatActivity {
     private SimilarAdapter similarAdapter;
     private String moreInfoHomepageUrl = "";
 
-    int tmdbId = 497698;
-    //950387 - Minecraft Movie
-    //1328049 - Sinhala Movie
-    // 550 - Fight Club
-    // 603 - The Matrix
-    // 497698 - Black Widow
-    //100088 - tlou
+    int tmdbId = -1;
     String providedId = null;
     boolean isTv = false;
     boolean triedMediaTypeFallback = false;
@@ -76,15 +70,24 @@ public class FilmDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         Intent intent = getIntent();
         if (intent != null) {
-            providedId = intent.getStringExtra("id");
-            String explicitType = intent.getStringExtra("media_type");
-            if (explicitType != null) {
-                if (explicitType.equalsIgnoreCase("tv")) {
-                    isTv = true;
-                } else if (explicitType.equalsIgnoreCase("movie")) {
-                    isTv = false;
+            if (intent.hasExtra("tmdb_id")) {
+                tmdbId = intent.getIntExtra("tmdb_id", -1);
+            }
+
+            if (intent.hasExtra("is_tv")) {
+                isTv = intent.getBooleanExtra("is_tv", false);
+            } else {
+                String explicitType = intent.getStringExtra("media_type");
+                if (explicitType != null) {
+                    if (explicitType.equalsIgnoreCase("tv")) {
+                        isTv = true;
+                    } else if (explicitType.equalsIgnoreCase("movie")) {
+                        isTv = false;
+                    }
                 }
             }
+
+            providedId = intent.getStringExtra("id");
         }
 
         super.onCreate(savedInstanceState);
@@ -189,7 +192,9 @@ public class FilmDetailsActivity extends AppCompatActivity {
             }
         });
 
-        if (providedId != null && !providedId.trim().isEmpty()) {
+        if (tmdbId > 0) {
+            LoadMovieDetails(tmdbId);
+        } else if (providedId != null && !providedId.trim().isEmpty()) {
             String trimmed = providedId.trim();
             if (trimmed.startsWith("tt")) {
                 resolveFromImdbId(trimmed);
@@ -197,10 +202,14 @@ public class FilmDetailsActivity extends AppCompatActivity {
                 try {
                     tmdbId = Integer.parseInt(trimmed);
                 } catch (NumberFormatException ignored) {}
-                LoadMovieDetails(tmdbId);
+                if (tmdbId > 0) {
+                    LoadMovieDetails(tmdbId);
+                } else {
+                    Toast.makeText(this, "No valid TMDB/IMDB id provided", Toast.LENGTH_SHORT).show();
+                }
             }
         } else {
-            LoadMovieDetails(tmdbId);
+            Toast.makeText(this, "No TMDB/IMDB id provided", Toast.LENGTH_SHORT).show();
         }
     }
 
