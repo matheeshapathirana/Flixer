@@ -71,3 +71,6 @@ google-services.json
 
 # Android Profiling
 *.hprof
+/Keys/release-key
+/
+app/release/baselineProfiles/0/app-release.dm

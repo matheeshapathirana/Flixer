@@ -19,6 +19,7 @@
     <color name="md_theme_onError">#FFFFFFFF</color>
     <color name="md_theme_errorContainer">#FFF2B8B5</color>
     <color name="md_theme_onErrorContainer">#FF601410</color>
+    <color name="button_ripple">#33FFFFFF</color>
 
     <!-- Base neutrals -->
     <color name="black">#FF000000</color>

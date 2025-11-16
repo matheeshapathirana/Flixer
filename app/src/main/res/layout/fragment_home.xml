@@ -57,7 +57,7 @@
                     android:fontFamily="sans-serif-condensed-light"
                     android:text="FLIXER"
                     android:textColor="@color/crystal_blue"
-                    android:textSize="20sp"
+                    android:textSize="40sp"
                     android:textStyle="bold"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toEndOf="@+id/imageView"
