@@ -18,12 +18,18 @@ import java.util.List;
 
 public class SliderAdapter extends RecyclerView.Adapter<SliderAdapter.SliderViewHolder> {
 
-    private List<String> imageUrls;
-    private Context context;
+    public interface OnSliderClickListener {
+        void onSliderClick(com.matheesha.flixer.adapter.FilmAdapter.FilmItem item);
+    }
 
-    public SliderAdapter(Context context, List<String> imageUrls) {
+    private final List<com.matheesha.flixer.adapter.FilmAdapter.FilmItem> items;
+    private final Context context;
+    private final OnSliderClickListener clickListener;
+
+    public SliderAdapter(Context context, List<com.matheesha.flixer.adapter.FilmAdapter.FilmItem> items, OnSliderClickListener clickListener) {
         this.context = context;
-        this.imageUrls = imageUrls;
+        this.items = items;
+        this.clickListener = clickListener;
     }
 
     @NonNull
@@ -35,25 +41,34 @@ public class SliderAdapter extends RecyclerView.Adapter<SliderAdapter.SliderView
 
     @Override
     public void onBindViewHolder(@NonNull SliderViewHolder holder, int position) {
-    // Load the image so the whole poster fits inside the ImageView (no cropping).
-    // Use resize with the known card dp size converted to px to avoid Picasso.fit() issues
-    // Match the card width/height used in the layout (card width 240dp, ViewPager height 340dp)
-    int widthDp = 240; // card width in dp (see slide_item.xml)
-    int heightDp = 340; // ViewPager height in dp (see fragment_home.xml)
-    float density = context.getResources().getDisplayMetrics().density;
-    int widthPx = (int) (widthDp * density + 0.5f);
-    int heightPx = (int) (heightDp * density + 0.5f);
+        com.matheesha.flixer.adapter.FilmAdapter.FilmItem item = items.get(position);
 
-    Picasso.get()
-        .load(imageUrls.get(position))
-        .resize(widthPx, heightPx)
-        .centerCrop()
-        .into(holder.imageView);
+        int widthDp = 240;
+        int heightDp = 340;
+        float density = context.getResources().getDisplayMetrics().density;
+        int widthPx = (int) (widthDp * density + 0.5f);
+        int heightPx = (int) (heightDp * density + 0.5f);
+
+        if (item.imageUrl != null && !item.imageUrl.isEmpty()) {
+            Picasso.get()
+                    .load(item.imageUrl)
+                    .resize(widthPx, heightPx)
+                    .centerCrop()
+                    .into(holder.imageView);
+        } else {
+            holder.imageView.setImageDrawable(null);
+        }
+
+        holder.itemView.setOnClickListener(v -> {
+            if (clickListener != null) {
+                clickListener.onSliderClick(item);
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
-        return imageUrls.size();
+        return items == null ? 0 : items.size();
     }
 
     static class SliderViewHolder extends RecyclerView.ViewHolder {

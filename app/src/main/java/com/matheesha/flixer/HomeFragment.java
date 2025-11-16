@@ -13,9 +13,7 @@ import androidx.viewpager2.widget.CompositePageTransformer;
 import androidx.viewpager2.widget.MarginPageTransformer;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.matheesha.flixer.adapter.SliderAdapter;
 import com.matheesha.flixer.adapter.FilmAdapter;
@@ -28,17 +26,17 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.Map;
-import java.util.HashMap;
-
 import androidx.recyclerview.widget.LinearLayoutManager;
+
+import com.matheesha.flixer.utilities.NetworkUtils;
 
 public class HomeFragment extends Fragment {
 
     private ViewPager2 viewPager;
     private SliderAdapter sliderAdapter;
-    private List<String> sliderImages = new ArrayList<>();
+    private final List<FilmAdapter.FilmItem> trendingItems = new ArrayList<>();
     private RequestQueue requestQueue;
+    private NetworkUtils networkUtils;
 
     private RecyclerView popularMoviesRv;
     private RecyclerView popularSeriesRv;
@@ -64,13 +62,14 @@ public class HomeFragment extends Fragment {
         try {
             // 1. Initialize Volley RequestQueue
             requestQueue = Volley.newRequestQueue(requireContext());
+            networkUtils = new NetworkUtils(requestQueue);
 
             // 2. Find the ViewPager2 by its ID from the inflated view
             viewPager = view.findViewById(R.id.slider);
 
             // 3. Initialize the adapter with an empty list.
             //    The adapter will be updated later when the network request finishes.
-            sliderAdapter = new SliderAdapter(requireContext(), sliderImages);
+            sliderAdapter = new SliderAdapter(requireContext(), trendingItems, this::openDetails);
             viewPager.setAdapter(sliderAdapter);
 
             // Make the ViewPager show a preview of adjacent pages and apply a scaling transform
@@ -135,132 +134,96 @@ public class HomeFragment extends Fragment {
     }
 
     private void fetchTrendingMovies() {
+        networkUtils.fetchTrendingMovies(response -> {
+            try {
+                trendingItems.clear();
+                JSONArray results = response.getJSONArray("results");
 
-        String url = "https://api.themoviedb.org/3/trending/movie/week?language=en-US";
+                int added = 0;
+                for (int i = 0; i < results.length() && added < 5; i++) {
+                    JSONObject movie = results.getJSONObject(i);
+                    if (movie.optBoolean("adult", false)) continue;
 
+                    String posterPath = movie.optString("poster_path", null);
+                    if (posterPath == null || posterPath.equals("null")) continue;
+                    String title = movie.optString("title", movie.optString("original_title", ""));
+                    int id = movie.optInt("id", -1);
+                    if (id <= 0) continue;
 
+                    String fullPosterUrl = "https://image.tmdb.org/t/p/w780" + posterPath;
+                    trendingItems.add(new FilmAdapter.FilmItem(
+                            id,
+                            false,
+                            title,
+                            fullPosterUrl
+                    ));
+                    added++;
+                }
 
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
-                response -> {
-                    try {
-                        sliderImages.clear();
+                sliderAdapter.notifyDataSetChanged();
 
-                        JSONArray results = response.getJSONArray("results");
-
-                        int added = 0;
-                        for (int i = 0; i < results.length() && added < 5; i++) {
-                            JSONObject movie = results.getJSONObject(i);
-                            // Skip adult content
-                            if (movie.optBoolean("adult", false)) continue;
-
-                            String posterPath = movie.optString("poster_path", null);
-                            if (posterPath == null || posterPath.equals("null")) continue;
-
-                            String fullPosterUrl = "https://image.tmdb.org/t/p/w780" + posterPath;
-                            sliderImages.add(fullPosterUrl);
-                            added++;
-                        }
-
-                        sliderAdapter.notifyDataSetChanged();
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                },
-                error -> error.printStackTrace()
-        ) {
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo");
-                headers.put("accept", "application/json");
-                return headers;
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        };
-
-        requestQueue.add(request);
+        },
+        error -> error.printStackTrace());
     }
 
     private void fetchPopularMovies() {
-        String url = "https://api.themoviedb.org/3/discover/movie?language=en-US&page=1&include_adult=false&sort_by=popularity.desc";
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
-                response -> {
-                    try {
-                        popularMovies.clear();
-                        JSONArray results = response.getJSONArray("results");
-                        for (int i = 0; i < results.length(); i++) {
-                            JSONObject item = results.getJSONObject(i);
+        networkUtils.fetchPopularMovies(response -> {
+            try {
+                popularMovies.clear();
+                JSONArray results = response.getJSONArray("results");
+                for (int i = 0; i < results.length(); i++) {
+                    JSONObject item = results.getJSONObject(i);
 
-                            if (item.optBoolean("adult", false)) continue;
-                            String posterPath = item.optString("poster_path", null);
-                            if (posterPath == null || posterPath.equals("null")) continue;
-                            String title = item.optString("title", item.optString("original_title", ""));
-                            int id = item.optInt("id", -1);
-                            if (id <= 0) continue;
-                            popularMovies.add(new FilmAdapter.FilmItem(
-                                    id,
-                                    false,
-                                    title,
-                                    "https://image.tmdb.org/t/p/w342" + posterPath
-                            ));
-                        }
-                        moviesAdapter.notifyDataSetChanged();
-                    } catch (Exception e) {
-                        Log.e("HomeFragment", "parse movies error", e);
-                    }
-                },
-                error -> Log.e("HomeFragment", "movies request error", error)
-        ) {
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo");
-                headers.put("accept", "application/json");
-                return headers;
+                    if (item.optBoolean("adult", false)) continue;
+                    String posterPath = item.optString("poster_path", null);
+                    if (posterPath == null || posterPath.equals("null")) continue;
+                    String title = item.optString("title", item.optString("original_title", ""));
+                    int id = item.optInt("id", -1);
+                    if (id <= 0) continue;
+                    popularMovies.add(new FilmAdapter.FilmItem(
+                            id,
+                            false,
+                            title,
+                            "https://image.tmdb.org/t/p/w342" + posterPath
+                    ));
+                }
+                moviesAdapter.notifyDataSetChanged();
+            } catch (Exception e) {
+                Log.e("HomeFragment", "parse movies error", e);
             }
-        };
-        requestQueue.add(request);
+        },
+        error -> Log.e("HomeFragment", "movies request error", error));
     }
 
     private void fetchPopularSeries() {
-        String url = "https://api.themoviedb.org/3/discover/tv?language=en-US&page=1&include_adult=false&sort_by=popularity.desc";
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
-                response -> {
-                    try {
-                        popularSeries.clear();
-                        JSONArray results = response.getJSONArray("results");
-                        for (int i = 0; i < results.length(); i++) {
-                            JSONObject item = results.getJSONObject(i);
-                            // Skip adult content if field exists
-                            if (item.optBoolean("adult", false)) continue;
-                            String posterPath = item.optString("poster_path", null);
-                            if (posterPath == null || posterPath.equals("null")) continue;
-                            String name = item.optString("name", item.optString("original_name", ""));
-                            int id = item.optInt("id", -1);
-                            if (id <= 0) continue;
-                            popularSeries.add(new FilmAdapter.FilmItem(
-                                    id,
-                                    true,
-                                    name,
-                                    "https://image.tmdb.org/t/p/w342" + posterPath
-                            ));
-                        }
-                        seriesAdapter.notifyDataSetChanged();
-                    } catch (Exception e) {
-                        Log.e("HomeFragment", "parse series error", e);
-                    }
-                },
-                error -> Log.e("HomeFragment", "series request error", error)
-        ) {
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo");
-                headers.put("accept", "application/json");
-                return headers;
+        networkUtils.fetchPopularSeries(response -> {
+            try {
+                popularSeries.clear();
+                JSONArray results = response.getJSONArray("results");
+                for (int i = 0; i < results.length(); i++) {
+                    JSONObject item = results.getJSONObject(i);
+                    if (item.optBoolean("adult", false)) continue;
+                    String posterPath = item.optString("poster_path", null);
+                    if (posterPath == null || posterPath.equals("null")) continue;
+                    String name = item.optString("name", item.optString("original_name", ""));
+                    int id = item.optInt("id", -1);
+                    if (id <= 0) continue;
+                    popularSeries.add(new FilmAdapter.FilmItem(
+                            id,
+                            true,
+                            name,
+                            "https://image.tmdb.org/t/p/w342" + posterPath
+                    ));
+                }
+                seriesAdapter.notifyDataSetChanged();
+            } catch (Exception e) {
+                Log.e("HomeFragment", "parse series error", e);
             }
-        };
-        requestQueue.add(request);
+        },
+        error -> Log.e("HomeFragment", "series request error", error));
     }
 
     private void openDetails(FilmAdapter.FilmItem item) {
