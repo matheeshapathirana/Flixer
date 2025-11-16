@@ -4,6 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/md_theme_background"
+    android:fitsSystemWindows="true"
+    android:paddingTop="24dp"
     tools:context=".WatchlistFragment">
 
     <!-- REFERENCE: https://youtu.be/LXl7D57fgOQ?si=_pnYx58qgK4yUBUD -->
