@@ -1,0 +1,33 @@
+How to Implement ScrollView in Android
+https://www.youtube.com/watch?v=K4CGYiQu52s
+https://developer.android.com/reference/android/widget/ScrollView
+
+How to Implement Chip Group Dynamically in Android Studio using Java
+https://www.youtube.com/watch?v=QdJxWQY7SIE
+https://www.youtube.com/watch?v=0Qmtt81Ypyk
+https://developer.android.com/reference/com/google/android/material/chip/ChipGroup
+
+ViewCompat Usage
+https://developer.android.com/reference/androidx/core/view/ViewCompat
+
+ShapeableImageView
+https://www.youtube.com/watch?v=PSn8AAs_o3M
+https://developer.android.com/reference/com/google/android/material/imageview/ShapeableImageView
+
+MaterialButton
+https://developer.android.com/reference/com/google/android/material/button/MaterialButton
+
+Volley Request Queue Cancel
+https://stackoverflow.com/questions/29051129/android-cancel-volley-request
+
+Volley Set Tag
+https://stackoverflow.com/questions/36127870/how-to-set-tag-to-the-request-and-get-it-from-response-volley-asynchronous-reque
+
+Adding headers to a volley request
+https://stackoverflow.com/questions/63870554/how-to-add-a-header-to-a-request-from-volley-library
+
+Refreshes entire adapter's visible data.
+https://developer.android.com/reference/androidx/recyclerview/widget/RecyclerView.Adapter
+
+Toasts
+https://developer.android.com/guide/topics/ui/notifiers/toasts

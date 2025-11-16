@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingHorizontal="6dp"
+    android:paddingVertical="6dp">
+
+    <!-- The page root must be match_parent so ViewPager2 does not throw IllegalStateException. -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="240dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="8dp">
+
+       <!-- Poster inside the card. Use centerCrop and a very small inner padding so the image fills
+           the visible frame (will crop a little to fully cover the card). -->
+       <ImageView
+          android:id="@+id/slidePoster"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:padding="0.5dp"
+          android:scaleType="centerCrop"
+          android:adjustViewBounds="false" />
+
+    </androidx.cardview.widget.CardView>
+
+</FrameLayout>
