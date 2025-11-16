@@ -81,6 +81,7 @@ dependencies {
     implementation("com.squareup.picasso:picasso:2.8")
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("de.hdodenhof:circleimageview:3.1.0")
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     // Firebase - FIXED VERSION
     implementation(platform("com.google.firebase:firebase-bom:32.3.1"))

@@ -17,7 +17,7 @@
         <activity
             android:name=".AuthActivity"
             android:exported="true"
-            android:theme="@style/Theme.Flixer.Auth"
+            android:theme="@style/Theme.Flixer.Splash"
             android:screenOrientation="portrait">  <!-- Added orientation -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
