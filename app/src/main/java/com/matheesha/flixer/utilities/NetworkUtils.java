@@ -21,6 +21,9 @@ public class NetworkUtils {
     private static final String TMDB_POSTER_W342_URL = "https://image.tmdb.org/t/p/w342";
     private static final String TV_SERIES_INFO_URL = "https://api.themoviedb.org/3/tv/";
     private static final String MOVIE_INFO_URL = "https://api.themoviedb.org/3/movie/";
+    private static final String TRENDING_MOVIES_URL = "https://api.themoviedb.org/3/trending/movie/week?language=en-US";
+    private static final String POPULAR_MOVIES_URL = "https://api.themoviedb.org/3/discover/movie?language=en-US&page=1&include_adult=false&sort_by=popularity.desc";
+    private static final String POPULAR_SERIES_URL = "https://api.themoviedb.org/3/discover/tv?language=en-US&page=1&include_adult=false&sort_by=popularity.desc";
     private static final String OMDB_BASE_URL = "https://www.omdbapi.com/";
     private static final String TMDB_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo";
     private static final String OMDB_API_KEY = "f9c8b034";
@@ -47,6 +50,11 @@ public class NetworkUtils {
 
     public interface SeriesProgressListener {
         void onSeriesProgressCalculated(int progress, JSONObject series);
+    }
+
+    // Generic JSON callback used for list endpoints (JSONArray root or array field)
+    public interface JsonArrayListener {
+        void onResponse(JSONArray jsonArray);
     }
 
     // Generic JSON callback used for multiple endpoints
@@ -118,6 +126,72 @@ public class NetworkUtils {
                     error.printStackTrace();
                     callback.onMovieInfoFetched(null);
                 }
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+
+        queue.add(request);
+    }
+
+    // Fetch trending movies (week)
+    public void fetchTrendingMovies(Response.Listener<JSONObject> listener,
+                                    Response.ErrorListener errorListener) {
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                TRENDING_MOVIES_URL,
+                null,
+                listener,
+                errorListener
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+
+        queue.add(request);
+    }
+
+    // Fetch popular movies list
+    public void fetchPopularMovies(Response.Listener<JSONObject> listener,
+                                   Response.ErrorListener errorListener) {
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                POPULAR_MOVIES_URL,
+                null,
+                listener,
+                errorListener
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+
+        queue.add(request);
+    }
+
+    // Fetch popular TV series list
+    public void fetchPopularSeries(Response.Listener<JSONObject> listener,
+                                   Response.ErrorListener errorListener) {
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                POPULAR_SERIES_URL,
+                null,
+                listener,
+                errorListener
         ) {
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
