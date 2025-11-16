@@ -16,11 +16,8 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.matheesha.flixer.adapter.FilmAdapter;
+import com.matheesha.flixer.utilities.NetworkUtils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -37,7 +34,7 @@ public class SearchFragment extends Fragment {
     private EditText searchEditText;
     private RecyclerView searchResultsRv;
     private FilmAdapter searchAdapter;
-    private RequestQueue requestQueue;
+    private NetworkUtils networkUtils;
     
     private final List<FilmAdapter.FilmItem> searchItems = new ArrayList<>();
 
@@ -50,7 +47,7 @@ public class SearchFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        requestQueue = Volley.newRequestQueue(requireContext());
+        networkUtils = new NetworkUtils(com.android.volley.toolbox.Volley.newRequestQueue(requireContext()));
         
         // Back button
         ImageView backButton = view.findViewById(R.id.back_button);
@@ -91,20 +88,19 @@ public class SearchFragment extends Fragment {
         try {
             String encodedQuery = URLEncoder.encode(query, "UTF-8");
             String url = "https://api.themoviedb.org/3/search/multi?query=" + encodedQuery + "&include_adult=false&language=en-US&page=1";
-            
+
             Log.d("SearchFragment", "Searching URL: " + url);
 
-            JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
+            networkUtils.enqueueJsonObjectRequest(url,
                     response -> {
                         try {
                             searchItems.clear();
 
                             JSONArray results = response.getJSONArray("results");
                             Log.d("SearchFragment", "Found " + results.length() + " results");
-                            
+
                             for (int i = 0; i < results.length(); i++) {
                                 JSONObject item = results.getJSONObject(i);
-                                // Skip adult content if marked
                                 if (item.optBoolean("adult", false)) continue;
                                 String posterPath = item.optString("poster_path");
                                 if (posterPath == null || posterPath.isEmpty() || posterPath.equals("null")) continue;
@@ -120,7 +116,7 @@ public class SearchFragment extends Fragment {
                                         id,
                                         isTv,
                                         title,
-                                        "https://image.tmdb.org/t/p/w342" + posterPath
+                                        networkUtils.buildPosterUrl(posterPath)
                                 ));
                                 Log.d("SearchFragment", "Added: " + title + " (" + (isTv ? "TV" : "Movie") + ")");
                             }
@@ -132,26 +128,7 @@ public class SearchFragment extends Fragment {
                     },
                     error -> {
                         Log.e("SearchFragment", "Search request failed: " + error.toString());
-                        if (error.networkResponse != null) {
-                            Log.e("SearchFragment", "Status code: " + error.networkResponse.statusCode);
-                            try {
-                                String responseBody = new String(error.networkResponse.data, "utf-8");
-                                Log.e("SearchFragment", "Response: " + responseBody);
-                            } catch (Exception e) {
-                                Log.e("SearchFragment", "Error reading response", e);
-                            }
-                        }
-                    }) {
-                @Override
-                public Map<String, String> getHeaders() {
-                    Map<String, String> headers = new HashMap<>();
-                    headers.put("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo");
-                    headers.put("accept", "application/json");
-                    return headers;
-                }
-            };
-
-            requestQueue.add(request);
+                    });
         } catch (UnsupportedEncodingException e) {
             Log.e("SearchFragment", "Error encoding query", e);
         }

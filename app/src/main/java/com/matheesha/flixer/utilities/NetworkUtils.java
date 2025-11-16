@@ -34,6 +34,29 @@ public class NetworkUtils {
     public NetworkUtils(RequestQueue queue) {
         this.queue = queue;
     }
+    
+    // Generic authenticated GET returning a JSONObject
+    public void enqueueJsonObjectRequest(String url,
+                                         Response.Listener<JSONObject> listener,
+                                         Response.ErrorListener errorListener) {
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                listener,
+                errorListener
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+
+        queue.add(request);
+    }
 
     /*
     //REFERENCE: ChatGPT
