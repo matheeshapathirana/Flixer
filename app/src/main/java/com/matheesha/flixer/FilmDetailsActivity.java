@@ -55,6 +55,7 @@ public class FilmDetailsActivity extends AppCompatActivity {
     TextView title, year, imdb, metascore, plot, duration, language;
     ImageView poster;
     MaterialButton moreInfoButton,addToWatchlistButton;
+    private boolean inWatchlist = false;
 
     private List<Cast> castData = new ArrayList<>();
     private CastAdapter castAdapter;
@@ -138,57 +139,62 @@ public class FilmDetailsActivity extends AppCompatActivity {
         addToWatchlistButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(!isTv){
-                    String fire_title = title.getText().toString();
-                    String DEFAULT_STATUS = "Plan to Watch";
-                    String fire_date_added = java.time.LocalDate.now().toString();
-                    String fire_time_added = java.time.LocalTime.now().withNano(0).toString();
+                if (imdbFromExternal == null || imdbFromExternal.trim().isEmpty()) {
+                    Toast.makeText(FilmDetailsActivity.this, "Please wait…", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
-                    Map<String, Object> movie = new HashMap<>();
-                    movie.put("title", fire_title);
-                    movie.put("status", DEFAULT_STATUS);
-                    movie.put("date_added", fire_date_added);
-                    movie.put("time_added", fire_time_added);
-                    movie.put("tmdb_id", tmdbId);
+                boolean isMovie = !isTv;
 
-                    db.collection("users")
-                            .document(DatabaseUtils.getCurrentUserID())
-                            .collection("watchlist_movies")
-                            .document(imdbFromExternal)
-                            .set(movie)
-                            .addOnSuccessListener(documentReference -> {
-                                Toast.makeText(FilmDetailsActivity.this, "Added to Watchlist", Toast.LENGTH_SHORT).show();
-                            })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(FilmDetailsActivity.this, "Error adding to Watchlist", Toast.LENGTH_SHORT).show();
-                            });
-                }else{
-                    String fire_title = title.getText().toString();
-                    String DEFAULT_STATUS = "Plan to Watch";
-                    String fire_date_added = java.time.LocalDate.now().toString();
-                    String fire_time_added = java.time.LocalTime.now().withNano(0).toString();
+                if (inWatchlist) {
+                    DatabaseUtils.getInstance().deleteFromWatchlist(isMovie, imdbFromExternal, new DatabaseUtils.DeleteListener() {
+                        @Override
+                        public void onDeleteSuccess() {
+                            inWatchlist = false;
+                            setWatchlistButtonText(false);
+                            Toast.makeText(FilmDetailsActivity.this, "Removed from watchlist", Toast.LENGTH_SHORT).show();
+                        }
 
-                    Map<String, Object> movie = new HashMap<>();
-                    movie.put("title", fire_title);
-                    movie.put("status", DEFAULT_STATUS);
-                    movie.put("date_added", fire_date_added);
-                    movie.put("time_added", fire_time_added);
-                    movie.put("tmdb_id", tmdbId);
+                        @Override
+                        public void onDeleteFailure(Exception error) {
+                            Toast.makeText(FilmDetailsActivity.this, "Error removing from watchlist", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    return;
+                }
+
+                // Add to watchlist flow
+                String fire_title = title.getText().toString();
+                String DEFAULT_STATUS = "Plan to Watch";
+                String fire_date_added = java.time.LocalDate.now().toString();
+                String fire_time_added = java.time.LocalTime.now().withNano(0).toString();
+
+                Map<String, Object> movie = new HashMap<>();
+                movie.put("title", fire_title);
+                movie.put("status", DEFAULT_STATUS);
+                movie.put("date_added", fire_date_added);
+                movie.put("time_added", fire_time_added);
+                movie.put("tmdb_id", tmdbId);
+
+                String collection = isMovie ? "watchlist_movies" : "watchlist_series";
+                if (!isMovie) {
                     movie.put("current_episode", 1);
                     movie.put("current_season", 1);
-
-                    db.collection("users")
-                            .document(DatabaseUtils.getCurrentUserID()) // Static user document ID for demonstration
-                            .collection("watchlist_series")
-                            .document(imdbFromExternal)
-                            .set(movie)
-                            .addOnSuccessListener(documentReference -> {
-                                Toast.makeText(FilmDetailsActivity.this, "Added to Watchlist", Toast.LENGTH_SHORT).show();
-                            })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(FilmDetailsActivity.this, "Error adding to Watchlist", Toast.LENGTH_SHORT).show();
-                            });
                 }
+
+                db.collection("users")
+                        .document(DatabaseUtils.getCurrentUserID())
+                        .collection(collection)
+                        .document(imdbFromExternal)
+                        .set(movie)
+                        .addOnSuccessListener(documentReference -> {
+                            inWatchlist = true;
+                            setWatchlistButtonText(true);
+                            Toast.makeText(FilmDetailsActivity.this, "Added to Watchlist", Toast.LENGTH_SHORT).show();
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(FilmDetailsActivity.this, "Error adding to Watchlist", Toast.LENGTH_SHORT).show();
+                        });
 
             }
         });
@@ -427,6 +433,8 @@ public class FilmDetailsActivity extends AppCompatActivity {
             try {
                 imdbFromExternal = response.optString("imdb_id", "");
                 if (!imdbFromExternal.isEmpty() && imdb != null) {
+                    // Update watchlist button state now that we know the document id
+                    checkIfInWatchlistAndUpdateButton();
                     fetchOmdbDetails(imdbFromExternal);
                 }
             } catch (Exception e) {
@@ -587,6 +595,8 @@ public class FilmDetailsActivity extends AppCompatActivity {
         duration.setText("N/A");
         language.setText("N/A");
         moreInfoHomepageUrl = "";
+        inWatchlist = false;
+        setWatchlistButtonText(false);
         ChipGroup chipGroup = findViewById(R.id.chip_group_genres);
         if (chipGroup != null) {
             chipGroup.removeAllViews();
@@ -617,6 +627,34 @@ public class FilmDetailsActivity extends AppCompatActivity {
         metascore.setText(error);
         plot.setText(error);
         moreInfoHomepageUrl = "";
+    }
+
+    private void checkIfInWatchlistAndUpdateButton() {
+        if (imdbFromExternal == null || imdbFromExternal.trim().isEmpty()) {
+            inWatchlist = false;
+            setWatchlistButtonText(false);
+            return;
+        }
+
+        String collection = (!isTv) ? "watchlist_movies" : "watchlist_series";
+        db.collection("users")
+                .document(DatabaseUtils.getCurrentUserID())
+                .collection(collection)
+                .document(imdbFromExternal)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    inWatchlist = doc.exists();
+                    setWatchlistButtonText(inWatchlist);
+                })
+                .addOnFailureListener(e -> {
+                    inWatchlist = false;
+                    setWatchlistButtonText(false);
+                });
+    }
+
+    private void setWatchlistButtonText(boolean isIn) {
+        if (addToWatchlistButton == null) return;
+        addToWatchlistButton.setText(isIn ? "Remove from watchlist" : "Add to Watchlist");
     }
 }
 
