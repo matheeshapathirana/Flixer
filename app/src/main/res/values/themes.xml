@@ -23,6 +23,8 @@
         <item name="colorOnSurface">@color/md_theme_onSurface</item>
         <item name="colorError">@color/md_theme_error</item>
         <item name="colorOnError">@color/md_theme_onError</item>
+
+        <item name="android:windowBackground">@color/md_theme_background</item>
     </style>
 
     <!-- A separate theme for the authentication screens. -->
@@ -33,7 +35,9 @@
         <item name="android:statusBarColor">@color/auth_dark_bg</item>
         <item name="android:navigationBarColor">@color/auth_dark_bg</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:windowBackground">@drawable/cinematic_background</item>
+
+        <!-- Use Material background color for login pages -->
+        <item name="android:windowBackground">@color/md_theme_background</item>
     </style>
 
     <!-- A custom style for the text input fields on the auth screens. -->
@@ -72,6 +76,10 @@
     <!-- A simple style for medium-weight text. -->
     <style name="MediumTextStyle">
         <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="Theme.Flixer.Splash" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="windowSplashScreenBackground">@color/md_theme_background</item>
     </style>
 
 </resources>

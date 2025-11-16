@@ -9,7 +9,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="24dp"
-    android:background="@android:color/transparent"
+    android:background="@color/md_theme_background"
     android:fitsSystemWindows="true">
 
     <LinearLayout
@@ -60,21 +60,19 @@
             android:paddingHorizontal="20dp">
 
             <!-- The main call to action for existing users. -->
+
+            <!-- The main call to action for new users. -->
             <Button
                 android:id="@+id/btnLogin"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:text="Log In"
                 android:textAllCaps="false"
+                android:textColor="@color/md_theme_onPrimaryContainer"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:background="@drawable/button_majestic_glow"
-                android:textColor="@color/white"
-                android:letterSpacing="0.02"
-                android:layout_marginBottom="16dp"
                 android:visibility="visible" />
 
-            <!-- The main call to action for new users. -->
             <Button
                 android:id="@+id/btnSignUp"
                 android:layout_width="match_parent"
