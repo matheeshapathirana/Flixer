@@ -16,20 +16,34 @@ import java.util.List;
 
 public class FilmAdapter extends RecyclerView.Adapter<FilmAdapter.FilmViewHolder> {
 
-    private List<String> imageUrls;
-    private List<String> titles;
-    private Context context;
-    private final int layoutResId;
+    public static class FilmItem {
+        public final int tmdbId;
+        public final boolean isTv;
+        public final String title;
+        public final String imageUrl;
 
-    public FilmAdapter(Context context, List<String> imageUrls, List<String> titles) {
-        this(context, imageUrls, titles, R.layout.viewholder_film);
+        public FilmItem(int tmdbId, boolean isTv, String title, String imageUrl) {
+            this.tmdbId = tmdbId;
+            this.isTv = isTv;
+            this.title = title;
+            this.imageUrl = imageUrl;
+        }
     }
 
-    public FilmAdapter(Context context, List<String> imageUrls, List<String> titles, int layoutResId) {
+    public interface OnFilmClickListener {
+        void onFilmClick(FilmItem item);
+    }
+
+    private final List<FilmItem> items;
+    private final Context context;
+    private final int layoutResId;
+    private final OnFilmClickListener clickListener;
+
+    public FilmAdapter(Context context, List<FilmItem> items, int layoutResId, OnFilmClickListener clickListener) {
         this.context = context;
-        this.imageUrls = imageUrls;
-        this.titles = titles;
+        this.items = items;
         this.layoutResId = layoutResId;
+        this.clickListener = clickListener;
     }
 
     @NonNull
@@ -41,23 +55,30 @@ public class FilmAdapter extends RecyclerView.Adapter<FilmAdapter.FilmViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull FilmViewHolder holder, int position) {
-        if (imageUrls != null && position < imageUrls.size()) {
-            String imageUrl = imageUrls.get(position);
+        FilmItem item = items.get(position);
+
+        if (item.imageUrl != null && !item.imageUrl.isEmpty()) {
             com.squareup.picasso.Picasso.get()
-                    .load(imageUrl)
+                    .load(item.imageUrl)
                     .fit()
                     .centerCrop()
                     .into(holder.imageView);
+        } else {
+            holder.imageView.setImageDrawable(null);
         }
 
-        if (titles != null && position < titles.size()) {
-            holder.titleView.setText(titles.get(position));
-        }
+        holder.titleView.setText(item.title != null ? item.title : "");
+
+        holder.itemView.setOnClickListener(v -> {
+            if (clickListener != null) {
+                clickListener.onFilmClick(item);
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
-        return imageUrls == null ? 0 : imageUrls.size();
+        return items == null ? 0 : items.size();
     }
 
     public static class FilmViewHolder extends RecyclerView.ViewHolder {

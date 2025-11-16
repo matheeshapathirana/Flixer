@@ -23,6 +23,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.matheesha.flixer.utilities.DatabaseUtils;
 import com.matheesha.flixer.utilities.NetworkUtils;
 import com.matheesha.flixer.utilities.MediaCacheManager;
 
@@ -151,7 +152,7 @@ public class FilmDetailsActivity extends AppCompatActivity {
                     movie.put("tmdb_id", tmdbId);
 
                     db.collection("users")
-                            .document("zxG3kkJH4WwOu4elGsCx") // Static user document ID for demonstration
+                            .document(DatabaseUtils.getCurrentUserID())
                             .collection("watchlist_movies")
                             .document(imdbFromExternal)
                             .set(movie)
@@ -177,7 +178,7 @@ public class FilmDetailsActivity extends AppCompatActivity {
                     movie.put("current_season", 1);
 
                     db.collection("users")
-                            .document("zxG3kkJH4WwOu4elGsCx") // Static user document ID for demonstration
+                            .document(DatabaseUtils.getCurrentUserID()) // Static user document ID for demonstration
                             .collection("watchlist_series")
                             .document(imdbFromExternal)
                             .set(movie)

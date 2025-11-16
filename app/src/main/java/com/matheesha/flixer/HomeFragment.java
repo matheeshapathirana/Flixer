@@ -45,10 +45,8 @@ public class HomeFragment extends Fragment {
     private FilmAdapter moviesAdapter;
     private FilmAdapter seriesAdapter;
 
-    private final List<String> movieImages = new ArrayList<>();
-    private final List<String> movieTitles = new ArrayList<>();
-    private final List<String> seriesImages = new ArrayList<>();
-    private final List<String> seriesTitles = new ArrayList<>();
+    private final List<FilmAdapter.FilmItem> popularMovies = new ArrayList<>();
+    private final List<FilmAdapter.FilmItem> popularSeries = new ArrayList<>();
 
     // onCreateView is only for creating and returning the view.
     @Override
@@ -109,7 +107,7 @@ public class HomeFragment extends Fragment {
             popularMoviesRv = view.findViewById(R.id.popular_movies_recyclerview);
             if (popularMoviesRv != null) {
                 popularMoviesRv.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
-                moviesAdapter = new FilmAdapter(requireContext(), movieImages, movieTitles, R.layout.viewholder_film);
+                moviesAdapter = new FilmAdapter(requireContext(), popularMovies, R.layout.viewholder_film, item -> openDetails(item));
                 popularMoviesRv.setAdapter(moviesAdapter);
                 fetchPopularMovies();
             }
@@ -118,16 +116,16 @@ public class HomeFragment extends Fragment {
             popularSeriesRv = view.findViewById(R.id.popular_series_recyclerview);
             if (popularSeriesRv != null) {
                 popularSeriesRv.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
-                seriesAdapter = new FilmAdapter(requireContext(), seriesImages, seriesTitles, R.layout.viewholder_film);
+                seriesAdapter = new FilmAdapter(requireContext(), popularSeries, R.layout.viewholder_film, item -> openDetails(item));
                 popularSeriesRv.setAdapter(seriesAdapter);
                 fetchPopularSeries();
             }
 
             // 7. Setup Search Button
             view.findViewById(R.id.searchbutton).setOnClickListener(v -> {
-                // Navigate to search fragment
+                // Navigate to search fragment within MainActivity's container
                 requireActivity().getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.fragment_container, new SearchFragment())
+                        .replace(R.id.frame_layout, new SearchFragment())
                         .addToBackStack(null)
                         .commit();
             });
@@ -188,8 +186,7 @@ public class HomeFragment extends Fragment {
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
                 response -> {
                     try {
-                        movieImages.clear();
-                        movieTitles.clear();
+                        popularMovies.clear();
                         JSONArray results = response.getJSONArray("results");
                         for (int i = 0; i < results.length(); i++) {
                             JSONObject item = results.getJSONObject(i);
@@ -198,8 +195,14 @@ public class HomeFragment extends Fragment {
                             String posterPath = item.optString("poster_path", null);
                             if (posterPath == null || posterPath.equals("null")) continue;
                             String title = item.optString("title", item.optString("original_title", ""));
-                            movieImages.add("https://image.tmdb.org/t/p/w342" + posterPath);
-                            movieTitles.add(title);
+                            int id = item.optInt("id", -1);
+                            if (id <= 0) continue;
+                            popularMovies.add(new FilmAdapter.FilmItem(
+                                    id,
+                                    false,
+                                    title,
+                                    "https://image.tmdb.org/t/p/w342" + posterPath
+                            ));
                         }
                         moviesAdapter.notifyDataSetChanged();
                     } catch (Exception e) {
@@ -224,8 +227,7 @@ public class HomeFragment extends Fragment {
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
                 response -> {
                     try {
-                        seriesImages.clear();
-                        seriesTitles.clear();
+                        popularSeries.clear();
                         JSONArray results = response.getJSONArray("results");
                         for (int i = 0; i < results.length(); i++) {
                             JSONObject item = results.getJSONObject(i);
@@ -234,8 +236,14 @@ public class HomeFragment extends Fragment {
                             String posterPath = item.optString("poster_path", null);
                             if (posterPath == null || posterPath.equals("null")) continue;
                             String name = item.optString("name", item.optString("original_name", ""));
-                            seriesImages.add("https://image.tmdb.org/t/p/w342" + posterPath);
-                            seriesTitles.add(name);
+                            int id = item.optInt("id", -1);
+                            if (id <= 0) continue;
+                            popularSeries.add(new FilmAdapter.FilmItem(
+                                    id,
+                                    true,
+                                    name,
+                                    "https://image.tmdb.org/t/p/w342" + posterPath
+                            ));
                         }
                         seriesAdapter.notifyDataSetChanged();
                     } catch (Exception e) {
@@ -253,6 +261,17 @@ public class HomeFragment extends Fragment {
             }
         };
         requestQueue.add(request);
+    }
+
+    private void openDetails(FilmAdapter.FilmItem item) {
+        try {
+            android.content.Intent intent = new android.content.Intent(requireContext(), FilmDetailsActivity.class);
+            intent.putExtra("tmdb_id", item.tmdbId);
+            intent.putExtra("is_tv", item.isTv);
+            startActivity(intent);
+        } catch (Exception e) {
+            Log.e("HomeFragment", "Failed to open details", e);
+        }
     }
 
 }

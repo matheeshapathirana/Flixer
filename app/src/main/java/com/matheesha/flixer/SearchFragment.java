@@ -39,8 +39,7 @@ public class SearchFragment extends Fragment {
     private FilmAdapter searchAdapter;
     private RequestQueue requestQueue;
     
-    private final List<String> searchImages = new ArrayList<>();
-    private final List<String> searchTitles = new ArrayList<>();
+    private final List<FilmAdapter.FilmItem> searchItems = new ArrayList<>();
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -64,7 +63,7 @@ public class SearchFragment extends Fragment {
         searchResultsRv = view.findViewById(R.id.search_results_recyclerview);
         searchResultsRv.setLayoutManager(new GridLayoutManager(requireContext(), 2));
         // Use grid-specific item layout so posters have equal width and ratio.
-        searchAdapter = new FilmAdapter(requireContext(), searchImages, searchTitles, R.layout.viewholder_film_grid);
+        searchAdapter = new FilmAdapter(requireContext(), searchItems, R.layout.viewholder_film_grid, this::openDetails);
         searchResultsRv.setAdapter(searchAdapter);
 
         // Search on text change
@@ -78,8 +77,7 @@ public class SearchFragment extends Fragment {
                     Log.d("SearchFragment", "Searching for: " + s);
                     searchMovies(s.toString());
                 } else if (s.length() == 0) {
-                    searchImages.clear();
-                    searchTitles.clear();
+                    searchItems.clear();
                     searchAdapter.notifyDataSetChanged();
                 }
             }
@@ -99,8 +97,7 @@ public class SearchFragment extends Fragment {
             JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null,
                     response -> {
                         try {
-                            searchImages.clear();
-                            searchTitles.clear();
+                            searchItems.clear();
 
                             JSONArray results = response.getJSONArray("results");
                             Log.d("SearchFragment", "Found " + results.length() + " results");
@@ -110,15 +107,24 @@ public class SearchFragment extends Fragment {
                                 // Skip adult content if marked
                                 if (item.optBoolean("adult", false)) continue;
                                 String posterPath = item.optString("poster_path");
-                                if (!posterPath.isEmpty() && !posterPath.equals("null")) {
-                                    searchImages.add("https://image.tmdb.org/t/p/w342" + posterPath);
-                                    
-                                    String title = item.has("title") ? item.getString("title") : item.optString("name", "Unknown");
-                                    searchTitles.add(title);
-                                    Log.d("SearchFragment", "Added: " + title);
-                                }
+                                if (posterPath == null || posterPath.isEmpty() || posterPath.equals("null")) continue;
+
+                                int id = item.optInt("id", -1);
+                                if (id <= 0) continue;
+
+                                String mediaType = item.optString("media_type", "");
+                                boolean isTv = mediaType.equalsIgnoreCase("tv");
+                                String title = item.has("title") ? item.optString("title", "") : item.optString("name", "Unknown");
+
+                                searchItems.add(new FilmAdapter.FilmItem(
+                                        id,
+                                        isTv,
+                                        title,
+                                        "https://image.tmdb.org/t/p/w342" + posterPath
+                                ));
+                                Log.d("SearchFragment", "Added: " + title + " (" + (isTv ? "TV" : "Movie") + ")");
                             }
-                            Log.d("SearchFragment", "Total added " + searchImages.size() + " items");
+                            Log.d("SearchFragment", "Total added " + searchItems.size() + " items");
                             searchAdapter.notifyDataSetChanged();
                         } catch (Exception e) {
                             Log.e("SearchFragment", "Error parsing search results", e);
@@ -148,6 +154,17 @@ public class SearchFragment extends Fragment {
             requestQueue.add(request);
         } catch (UnsupportedEncodingException e) {
             Log.e("SearchFragment", "Error encoding query", e);
+        }
+    }
+
+    private void openDetails(FilmAdapter.FilmItem item) {
+        try {
+            android.content.Intent intent = new android.content.Intent(requireContext(), FilmDetailsActivity.class);
+            intent.putExtra("tmdb_id", item.tmdbId);
+            intent.putExtra("is_tv", item.isTv);
+            startActivity(intent);
+        } catch (Exception e) {
+            Log.e("SearchFragment", "Failed to open details", e);
         }
     }
 }
