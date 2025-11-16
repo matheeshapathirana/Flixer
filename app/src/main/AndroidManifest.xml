@@ -32,5 +32,12 @@
             android:theme="@style/Theme.Flixer"
             android:screenOrientation="portrait" />  <!-- Added orientation -->
 
+        <!-- Film Details Activity -->
+        <activity
+            android:name=".FilmDetailsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Flixer"
+            android:screenOrientation="portrait" />
+
     </application>
 </manifest>
