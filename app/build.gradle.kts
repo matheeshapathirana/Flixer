@@ -1,3 +1,7 @@
+import java.util.Properties
+import java.io.FileInputStream
+
+
 plugins {
     alias(libs.plugins.android.application)
     id("com.google.gms.google-services")
@@ -6,7 +10,6 @@ plugins {
 android {
     namespace = "com.matheesha.flixer"
     compileSdk = 36
-
     defaultConfig {
         applicationId = "com.matheesha.flixer"
         minSdk = 33
@@ -14,8 +17,27 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+    // Load keys from local.properties
+    //https://al-e-shevelev.medium.com/a-secure-way-to-store-api-keys-in-android-applications-238135709067
+    val props = Properties()
+    val propsFile = rootProject.file("local.properties")
+    if (propsFile.exists()) {
+        props.load(FileInputStream(propsFile))
     }
+
+    buildConfigField(
+        "String",
+        "TMDB_ACCESS_TOKEN",
+        "\"${props.getProperty("TMDB_ACCESS_TOKEN", "")}\""
+    )
+    buildConfigField(
+        "String",
+        "OMDB_API_KEY",
+        "\"${props.getProperty("OMDB_API_KEY", "")}\""
+    )
+}
 
     buildTypes {
         release {
@@ -29,6 +51,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
     compileOptions {

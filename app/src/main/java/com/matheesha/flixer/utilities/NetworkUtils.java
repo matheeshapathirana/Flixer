@@ -6,6 +6,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.matheesha.flixer.BuildConfig;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -25,8 +26,9 @@ public class NetworkUtils {
     private static final String POPULAR_MOVIES_URL = "https://api.themoviedb.org/3/discover/movie?language=en-US&page=1&include_adult=false&sort_by=popularity.desc";
     private static final String POPULAR_SERIES_URL = "https://api.themoviedb.org/3/discover/tv?language=en-US&page=1&include_adult=false&sort_by=popularity.desc";
     private static final String OMDB_BASE_URL = "https://www.omdbapi.com/";
-    private static final String TMDB_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiYmNiMWFlZmYyOTQ2NWM0NWYwMWNkZDM0Y2JmNjJhZCIsIm5iZiI6MTc1OTE2MDE5Ni4yNTQwMDAyLCJzdWIiOiI2OGRhYTc4NDI3NDUyMjUyOTc1MzBjYTYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.UT1kxTV2oat5NuCDdLmyNxJbG2WBaO5-rw_1vXf-MUo";
-    private static final String OMDB_API_KEY = "f9c8b034";
+    //https://al-e-shevelev.medium.com/a-secure-way-to-store-api-keys-in-android-applications-238135709067
+    private static final String TMDB_ACCESS_TOKEN = BuildConfig.TMDB_ACCESS_TOKEN;
+    private static final String OMDB_API_KEY = BuildConfig.OMDB_API_KEY;
     RequestQueue queue;
 
     public NetworkUtils(RequestQueue queue) {
