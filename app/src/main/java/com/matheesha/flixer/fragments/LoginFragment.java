@@ -44,6 +44,9 @@ import com.matheesha.flixer.R;
  * This fragment handles the entire user login experience, including email/password, 
  * Google Sign-In, and password reset.
  */
+
+//https://www.youtube.com/watch?v=suVgcrPwYKQ
+//https://developer.android.com/identity/legacy/gsi/legacy-sign-in
 public class LoginFragment extends Fragment {
 
     // UI Views
