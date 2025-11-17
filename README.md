@@ -1,12 +1,12 @@
-# 🎬 Flixer  
-**Android Movie & TV Info App (HCI Assignment 02)**  
+# 🎬 Flixer
+**Android Movie & TV Info App – HCI Assignment 02**
 
-Flixer is a mobile application built for the **Human Computer Interaction (HCI) Assignment 02**.  
-It allows users to explore movies and TV shows, view detailed information, and manage a personalized watchlist.  
+Flixer is an Android application built for the **Human Computer Interaction (HCI) Assignment 02**. 
+It lets users explore movies and TV shows, view rich details, and manage a personalized watchlist with a clean, modern interface.
 
 ---
 
-## 👥 Group Members  
+## 👥 Group Members
 | Student ID | Name |
 |------------|------|
 | SA24610652 | M. A. Pathirana |
@@ -16,55 +16,63 @@ It allows users to explore movies and TV shows, view detailed information, and m
 
 ---
 
-## ✨ Features  
+## ✨ Features
 | Function | Description | Key UI Components |
 |----------|-------------|-------------------|
-| 🔑 **Login** | Simple credential or token-based login to personalize and sync watchlist. | `LoginActivity`, form fields, validation, "Remember Me" option |
-| 🔍 **Explore** | Discover trending titles, browse categories, and search TV shows/movies. | `ExploreFragment`, `RecyclerView` grids, search bar, filters |
-| 🎥 **Film Details Page** | View detailed info: poster, title, synopsis, genres, cast, reviews, similar titles, and option to add to watchlist. | `FilmDetailsActivity`, `CastAdapter`, `ReviewAdapter` |
-| 📌 **Watchlist** | Save movies/TV shows for later with add/remove options. Supports local DB storage with optional cloud sync. | `WatchlistFragment`, Room Database, Firebase (optional) |
+| 🔑 **Login & Onboarding** | Simple credential-based login with optional "Remember Me" to personalize and sync the experience. | `LoginActivity`, text fields, buttons, validation, shared preferences |
+| 🔍 **Explore** | Discover trending titles, browse categories, and search movies/TV shows. | `ExploreFragment`, `RecyclerView` grids/lists, search bar, filter chips |
+| 🎥 **Film / Show Details** | View poster, title, synopsis, genres, cast, rating, reviews, and similar titles, with an option to add/remove from watchlist. | `FilmDetailsActivity`, `CastAdapter`, `ReviewAdapter` |
+| 📌 **Watchlist** | Save movies/TV shows for later with add/remove actions and persistent local storage. | `WatchlistFragment`, Room Database (entities/DAOs), adapters |
+---
+
+## 🔗 APIs & Data Sources
+We integrated external APIs to fetch real-time movie and TV information:
+
+1. **TMDB (The Movie Database)** – TV show search and metadata  
+2. **OMDb (Open Movie Database)** – Movie details, posters & images  
+
+📌 **Postman Collection**: [View Here](https://matheeshapathirana.postman.co/workspace/My-Workspace~69a975ab-c819-4d2b-8a62-25410ef5666c/collection/19782899-4d0a7add-eeb9-47de-aa51-56823fe29d42?action=share&creator=19782899)
+
+> Note: API keys are not included in this repository. To run the project, configure your own TMDB/OMDb keys in `local.properties` or the appropriate constants file.
 
 ---
 
-## 🔗 APIs Used  
-We integrated external APIs to fetch real-time movie and TV information.  
+## 🛠️ Tech Stack
 
-1. **TMDB (The Movie Database)** – Search TV shows  
-   ```http
-   https://api.themoviedb.org/3/search/tv
-   ```
-   API Key: `bbcb1aeff29465c45f01cdd34cbf62ad`  
-
-2. **OMDb (Open Movie Database)** – Movie posters & images  
-   ```http
-   http://img.omdbapi.com/
-   ```
-   API Key: `f9c8b034`  
-
-📌 **Postman Collection**: [View Here](https://matheeshapathirana.postman.co/workspace/My-Workspace~69a975ab-c819-4d2b-8a62-25410ef5666c/collection/19782899-4d0a7add-eeb9-47de-aa51-56823fe29d42?action=share&creator=19782899)  
+- **Language:** Java (Android)  
+- **UI:** XML layouts, `RecyclerView`, Material Components, ConstraintLayout  
+- **Database:** Firebase Firestore  
+- **Networking:** Volley  
+- **Images:** Picasso (for posters and thumbnails)  
+- **Animations:** Lottie for lightweight vector animations  
 
 ---
 
-## 🛠️ Tech Stack  
-- **Language:** Kotlin (Android)  
-- **UI:** XML layouts + RecyclerView + Material Components  
-- **Database:** Room (local) + Firebase (optional sync)  
-- **Networking:** Retrofit / Volley  
+## 🚀 Getting Started
+
+1. **Open the project** in Android Studio using the `Flixer` root folder.  
+2. **Add API keys** in your `local.properties` (or a constants file) for TMDB and OMDb.  
+3. **Sync Gradle** and run the app on an emulator or device.  
+
+No keys or sensitive data are committed to source control.
 
 ---
 
-## 📖 Attributions and Licensing
+## 📖 Attributions & Licensing
 
-This project is created for academic use only as part of the HCI Assignment 02.
+This project is created for **academic use only** as part of **HCI Assignment 02**.
 
 ### Design
-The UI design for the login and sign-up screens was inspired by the beautiful work of **[Fatima Bouzid](https://www.pinterest.com/pin/135178426310930500/)**.
+The login and sign-up screen designs were inspired by the work of **[Fatima Bouzid](https://www.pinterest.com/pin/135178426310930500/)**.
 
 ### Open-Source Libraries
-This project utilizes the following open-source libraries, all of which are licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0):
+This project utilizes the following open-source libraries, most of which are licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0):
+
 - AndroidX Libraries (AppCompat, Activity, ConstraintLayout, CardView, ViewPager2, Fragment-KTX)
 - Google Material Components
 - Firebase Android BoM, Authentication, and Analytics
 - Lottie for Android
 - Volley
 - Picasso
+
+Flixer is not intended for commercial use; it is solely for learning and demonstration purposes.

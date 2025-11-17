@@ -39,6 +39,7 @@ android {
         )
     }
 
+    //ChatGPT
     signingConfigs {
         create("release") {
             storeFile = file(props.getProperty("storeFile", "Keys/release-key"))
