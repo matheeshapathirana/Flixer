@@ -19,10 +19,10 @@ It lets users explore movies and TV shows, view rich details, and manage a perso
 ## ✨ Features
 | Function | Description | Key UI Components |
 |----------|-------------|-------------------|
-| 🔑 **Login & Onboarding** | Simple credential-based login with optional "Remember Me" to personalize and sync the experience. | `LoginActivity`, text fields, buttons, validation, shared preferences |
-| 🔍 **Explore** | Discover trending titles, browse categories, and search movies/TV shows. | `ExploreFragment`, `RecyclerView` grids/lists, search bar, filter chips |
+| 🔑 **Login & Onboarding** | Simple credential-based login with optional Google login to personalize and sync the experience. | `LoginActivity`, text fields, buttons, validation, shared preferences |
+| 🔍 **Explore** | Discover trending titles and search movies/TV shows. | `ExploreFragment`, `RecyclerView` grids/lists, search bar, filter chips |
 | 🎥 **Film / Show Details** | View poster, title, synopsis, genres, cast, rating, reviews, and similar titles, with an option to add/remove from watchlist. | `FilmDetailsActivity`, `CastAdapter`, `ReviewAdapter` |
-| 📌 **Watchlist** | Save movies/TV shows for later with add/remove actions and persistent local storage. | `WatchlistFragment`, Room Database (entities/DAOs), adapters |
+| 📌 **Watchlist** | Save movies/TV shows for later with add/remove actions and persistent remote storage. | `WatchlistFragment`, (Firebase Firestore), adapters |
 ---
 
 ## 🔗 APIs & Data Sources
@@ -66,7 +66,7 @@ This project is created for **academic use only** as part of **HCI Assignment 02
 The login and sign-up screen designs were inspired by the work of **[Fatima Bouzid](https://www.pinterest.com/pin/135178426310930500/)**.
 
 ### Open-Source Libraries
-This project utilizes the following open-source libraries, most of which are licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0):
+This project utilizes the following open-source libraries:
 
 - AndroidX Libraries (AppCompat, Activity, ConstraintLayout, CardView, ViewPager2, Fragment-KTX)
 - Google Material Components
@@ -76,3 +76,5 @@ This project utilizes the following open-source libraries, most of which are lic
 - Picasso
 
 Flixer is not intended for commercial use; it is solely for learning and demonstration purposes.
+
+Made with ❤️ Y2S1 HCI Group 03
