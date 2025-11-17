@@ -1,4 +1,4 @@
-package com.matheesha.flixer;
+package com.matheesha.flixer.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -11,6 +11,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.matheesha.flixer.R;
+import com.matheesha.flixer.models.Similar;
 import com.squareup.picasso.Picasso;
 
 public class SimilarAdapter extends RecyclerView.Adapter<SimilarViewHolder> {

@@ -1,4 +1,4 @@
-package com.matheesha.flixer;
+package com.matheesha.flixer.models;
 
 public class Cast {
     private String actorName;

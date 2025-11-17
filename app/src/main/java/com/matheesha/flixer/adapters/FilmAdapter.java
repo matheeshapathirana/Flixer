@@ -1,4 +1,4 @@
-package com.matheesha.flixer.adapter;
+package com.matheesha.flixer.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;

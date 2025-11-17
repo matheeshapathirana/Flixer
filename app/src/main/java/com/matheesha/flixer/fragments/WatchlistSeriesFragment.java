@@ -1,4 +1,4 @@
-package com.matheesha.flixer;
+package com.matheesha.flixer.fragments;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -17,6 +17,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.matheesha.flixer.R;
+import com.matheesha.flixer.adapters.WatchlistSeriesAdapter;
+import com.matheesha.flixer.models.WatchlistSeriesModel;
 import com.matheesha.flixer.utilities.DatabaseUtils;
 import com.matheesha.flixer.utilities.NetworkUtils;
 import com.matheesha.flixer.utilities.MediaCacheManager;

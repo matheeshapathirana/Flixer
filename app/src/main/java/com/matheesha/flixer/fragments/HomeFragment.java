@@ -1,4 +1,4 @@
-package com.matheesha.flixer;
+package com.matheesha.flixer.fragments;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -15,12 +15,13 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
-import com.matheesha.flixer.adapter.SliderAdapter;
-import com.matheesha.flixer.adapter.FilmAdapter;
+import com.matheesha.flixer.FilmDetailsActivity;
+import com.matheesha.flixer.R;
+import com.matheesha.flixer.adapters.SliderAdapter;
+import com.matheesha.flixer.adapters.FilmAdapter;
 
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;

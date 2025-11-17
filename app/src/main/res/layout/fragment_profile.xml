@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/md_theme_background"
-    tools:context=".ProfileFragment">
+    tools:context=".fragments.ProfileFragment">
 
     <!-- REFERENCE: https://youtu.be/jOFLmKMOcK0?si=7n8Kh6Q9sm6TJgss -->
     <com.google.android.material.card.MaterialCardView

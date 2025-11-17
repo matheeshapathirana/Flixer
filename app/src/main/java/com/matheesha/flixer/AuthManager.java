@@ -1,4 +1,4 @@
-package com.matheesha.flixer.auth;
+package com.matheesha.flixer;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;

@@ -9,9 +9,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.matheesha.flixer.auth.fragments.LoginFragment;
-import com.matheesha.flixer.auth.fragments.SignUpFragment;
-import com.matheesha.flixer.auth.fragments.WelcomeFragment;
+import com.matheesha.flixer.fragments.LoginFragment;
+import com.matheesha.flixer.fragments.SignUpFragment;
+import com.matheesha.flixer.fragments.WelcomeFragment;
 
 // This activity is just a container for the auth fragments.
 public class AuthActivity extends AppCompatActivity {

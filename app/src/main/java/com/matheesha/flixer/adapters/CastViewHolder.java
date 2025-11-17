@@ -1,4 +1,4 @@
-package com.matheesha.flixer;
+package com.matheesha.flixer.adapters;
 
 import android.view.View;
 import android.widget.ImageView;
@@ -6,6 +6,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.matheesha.flixer.R;
 
 public class CastViewHolder extends RecyclerView.ViewHolder {
     TextView actor_name, character_name;

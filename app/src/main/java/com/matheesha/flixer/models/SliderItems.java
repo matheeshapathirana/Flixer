@@ -1,4 +1,4 @@
-package com.matheesha.flixer.model;
+package com.matheesha.flixer.models;
 
 public class SliderItems {
     // Field to store the movie title

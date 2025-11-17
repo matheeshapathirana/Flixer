@@ -10,6 +10,9 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.matheesha.flixer.fragments.HomeFragment;
+import com.matheesha.flixer.fragments.ProfileFragment;
+import com.matheesha.flixer.fragments.WatchlistFragment;
 
 public class MainActivity extends AppCompatActivity {
 

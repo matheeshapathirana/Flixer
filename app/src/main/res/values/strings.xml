@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Flixer</string>
-    <string name="default_web_client_id">YOUR_WEB_CLIENT_ID</string>
+    <string name="default_web_client_id">613435414153-ieuos4seejio8voscnephbaket4v693u.apps.googleusercontent.com</string>
 
     <!-- Strings for the authentication screens. -->
     <string name="welcome_title">Your cinematic journey begins here</string>

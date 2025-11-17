@@ -1,7 +1,6 @@
-package com.matheesha.flixer;
+package com.matheesha.flixer.fragments;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +16,9 @@ import com.android.volley.toolbox.Volley;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.matheesha.flixer.R;
+import com.matheesha.flixer.adapters.WatchlistMoviesAdapter;
+import com.matheesha.flixer.models.WatchlistMovieModel;
 import com.matheesha.flixer.utilities.DatabaseUtils;
 import com.matheesha.flixer.utilities.MediaCacheManager;
 import com.matheesha.flixer.utilities.NetworkUtils;

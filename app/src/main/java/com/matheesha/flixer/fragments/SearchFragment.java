@@ -1,4 +1,4 @@
-package com.matheesha.flixer;
+package com.matheesha.flixer.fragments;
 
 import android.os.Bundle;
 import android.text.Editable;
@@ -16,7 +16,9 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.matheesha.flixer.adapter.FilmAdapter;
+import com.matheesha.flixer.FilmDetailsActivity;
+import com.matheesha.flixer.R;
+import com.matheesha.flixer.adapters.FilmAdapter;
 import com.matheesha.flixer.utilities.NetworkUtils;
 
 import org.json.JSONArray;
@@ -25,9 +27,7 @@ import org.json.JSONObject;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class SearchFragment extends Fragment {
 

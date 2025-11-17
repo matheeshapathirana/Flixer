@@ -7,7 +7,7 @@
     android:background="@color/md_theme_background"
     android:fitsSystemWindows="true"
     android:paddingTop="24dp"
-    tools:context=".WatchlistFragment">
+    tools:context=".fragments.WatchlistFragment">
 
     <!-- REFERENCE: https://youtu.be/LXl7D57fgOQ?si=_pnYx58qgK4yUBUD -->
     <com.google.android.material.tabs.TabLayout

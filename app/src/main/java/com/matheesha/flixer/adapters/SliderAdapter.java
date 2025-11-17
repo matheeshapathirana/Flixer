@@ -1,4 +1,4 @@
-package com.matheesha.flixer.adapter;
+package com.matheesha.flixer.adapters;
 
 
 
@@ -19,14 +19,14 @@ import java.util.List;
 public class SliderAdapter extends RecyclerView.Adapter<SliderAdapter.SliderViewHolder> {
 
     public interface OnSliderClickListener {
-        void onSliderClick(com.matheesha.flixer.adapter.FilmAdapter.FilmItem item);
+        void onSliderClick(com.matheesha.flixer.adapters.FilmAdapter.FilmItem item);
     }
 
-    private final List<com.matheesha.flixer.adapter.FilmAdapter.FilmItem> items;
+    private final List<com.matheesha.flixer.adapters.FilmAdapter.FilmItem> items;
     private final Context context;
     private final OnSliderClickListener clickListener;
 
-    public SliderAdapter(Context context, List<com.matheesha.flixer.adapter.FilmAdapter.FilmItem> items, OnSliderClickListener clickListener) {
+    public SliderAdapter(Context context, List<com.matheesha.flixer.adapters.FilmAdapter.FilmItem> items, OnSliderClickListener clickListener) {
         this.context = context;
         this.items = items;
         this.clickListener = clickListener;
@@ -41,7 +41,7 @@ public class SliderAdapter extends RecyclerView.Adapter<SliderAdapter.SliderView
 
     @Override
     public void onBindViewHolder(@NonNull SliderViewHolder holder, int position) {
-        com.matheesha.flixer.adapter.FilmAdapter.FilmItem item = items.get(position);
+        com.matheesha.flixer.adapters.FilmAdapter.FilmItem item = items.get(position);
 
         int widthDp = 240;
         int heightDp = 340;

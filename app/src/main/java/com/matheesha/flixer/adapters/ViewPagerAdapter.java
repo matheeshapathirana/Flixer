@@ -1,8 +1,12 @@
-package com.matheesha.flixer;
+package com.matheesha.flixer.adapters;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
+
+import com.matheesha.flixer.fragments.WatchlistFragment;
+import com.matheesha.flixer.fragments.WatchlistMoviesFragment;
+import com.matheesha.flixer.fragments.WatchlistSeriesFragment;
 
 //REFERENCE: https://youtu.be/LXl7D57fgOQ?si=_pnYx58qgK4yUBUD
 

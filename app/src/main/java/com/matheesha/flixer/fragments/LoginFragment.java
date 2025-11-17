@@ -1,4 +1,4 @@
-package com.matheesha.flixer.auth.fragments;
+package com.matheesha.flixer.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;

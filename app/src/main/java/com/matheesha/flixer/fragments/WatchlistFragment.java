@@ -1,4 +1,4 @@
-package com.matheesha.flixer;
+package com.matheesha.flixer.fragments;
 
 import android.os.Bundle;
 
@@ -12,13 +12,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputLayout;
+import com.matheesha.flixer.R;
+import com.matheesha.flixer.adapters.ViewPagerAdapter;
 
 
 public class WatchlistFragment extends Fragment {
