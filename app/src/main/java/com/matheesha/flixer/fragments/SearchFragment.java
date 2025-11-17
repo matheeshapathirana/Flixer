@@ -35,7 +35,7 @@ public class SearchFragment extends Fragment {
     private RecyclerView searchResultsRv;
     private FilmAdapter searchAdapter;
     private NetworkUtils networkUtils;
-    
+
     private final List<FilmAdapter.FilmItem> searchItems = new ArrayList<>();
 
     @Override
@@ -48,22 +48,22 @@ public class SearchFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         networkUtils = new NetworkUtils(com.android.volley.toolbox.Volley.newRequestQueue(requireContext()));
-        
-        // Back button
+
+
         ImageView backButton = view.findViewById(R.id.back_button);
         backButton.setOnClickListener(v -> requireActivity().getSupportFragmentManager().popBackStack());
 
-        // Search input
+
         searchEditText = view.findViewById(R.id.search_input);
-        
-        // Results RecyclerView
+
+
         searchResultsRv = view.findViewById(R.id.search_results_recyclerview);
         searchResultsRv.setLayoutManager(new GridLayoutManager(requireContext(), 2));
-        // Use grid-specific item layout so posters have equal width and ratio.
+        // Use grid-specific item layout so posters have equal width and ratio.(Claude Sonnet)
         searchAdapter = new FilmAdapter(requireContext(), searchItems, R.layout.viewholder_film_grid, this::openDetails);
         searchResultsRv.setAdapter(searchAdapter);
 
-        // Search on text change
+        // Search on text change-(Gemini - AI)
         searchEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
