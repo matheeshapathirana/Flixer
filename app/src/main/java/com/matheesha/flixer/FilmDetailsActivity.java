@@ -22,6 +22,7 @@ import com.android.volley.toolbox.Volley;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.matheesha.flixer.adapters.CastAdapter;
 import com.matheesha.flixer.adapters.SimilarAdapter;
@@ -186,6 +187,22 @@ public class FilmDetailsActivity extends AppCompatActivity {
                     movie.put("current_season", 1);
                 }
 
+                DatabaseUtils.getInstance().addToWatchlist(collection, imdbFromExternal, movie,
+                        new DatabaseUtils.addToWatchlistListener() {
+                            @Override
+                            public void onAddSuccess() {
+                                inWatchlist = true;
+                                setWatchlistButtonText(true);
+                                Toast.makeText(FilmDetailsActivity.this, "Added to Watchlist", Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onAddFailure(Exception error) {
+                                Toast.makeText(FilmDetailsActivity.this, "Error adding to Watchlist", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
+                /*
                 db.collection("users")
                         .document(DatabaseUtils.getCurrentUserID())
                         .collection(collection)
@@ -199,6 +216,8 @@ public class FilmDetailsActivity extends AppCompatActivity {
                         .addOnFailureListener(e -> {
                             Toast.makeText(FilmDetailsActivity.this, "Error adding to Watchlist", Toast.LENGTH_SHORT).show();
                         });
+
+                 */
 
             }
         });
@@ -641,6 +660,24 @@ public class FilmDetailsActivity extends AppCompatActivity {
         }
 
         String collection = (!isTv) ? "watchlist_movies" : "watchlist_series";
+
+
+        DatabaseUtils.getInstance().checkIfInWatchlist(collection, imdbFromExternal,
+                new DatabaseUtils.checkIfInWatchlistListener() {
+                    @Override
+                    public void inWatchlist(DocumentSnapshot doc) {
+                        inWatchlist = doc.exists();
+                        setWatchlistButtonText(inWatchlist);
+                    }
+
+                    @Override
+                    public void notInWatchlist(Exception error) {
+                        inWatchlist = false;
+                        setWatchlistButtonText(false);
+                    }
+                });
+
+        /*
         db.collection("users")
                 .document(DatabaseUtils.getCurrentUserID())
                 .collection(collection)
@@ -654,6 +691,8 @@ public class FilmDetailsActivity extends AppCompatActivity {
                     inWatchlist = false;
                     setWatchlistButtonText(false);
                 });
+
+         */
     }
 
     private void setWatchlistButtonText(boolean isIn) {

@@ -4,12 +4,10 @@ import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.matheesha.flixer.BuildConfig;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
@@ -34,29 +32,8 @@ public class NetworkUtils {
     public NetworkUtils(RequestQueue queue) {
         this.queue = queue;
     }
-    
-    // Generic authenticated GET returning a JSONObject
-    public void enqueueJsonObjectRequest(String url,
-                                         Response.Listener<JSONObject> listener,
-                                         Response.ErrorListener errorListener) {
-        JsonObjectRequest request = new JsonObjectRequest(
-                Request.Method.GET,
-                url,
-                null,
-                listener,
-                errorListener
-        ) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> headers = new HashMap<String, String>();
-                headers.put("accept", "application/json");
-                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
-                return headers;
-            }
-        };
 
-        queue.add(request);
-    }
+    // ------------------ SANUPA -----------------------------------------------------------------------------------------------------
 
     /*
     //REFERENCE: ChatGPT
@@ -75,21 +52,6 @@ public class NetworkUtils {
 
     public interface SeriesProgressListener {
         void onSeriesProgressCalculated(int progress, JSONObject series);
-    }
-
-    // Generic JSON callback used for list endpoints (JSONArray root or array field)
-    public interface JsonArrayListener {
-        void onResponse(JSONArray jsonArray);
-    }
-
-    // Generic JSON callback used for multiple endpoints
-    public interface JsonListener {
-        void onResponse(JSONObject json);
-    }
-
-    // Resolve TMDB id and media type from IMDb id
-    public interface IdResolveListener {
-        void onResolved(Integer tmdbId, Boolean isTv);
     }
 
     /*
@@ -164,102 +126,6 @@ public class NetworkUtils {
         queue.add(request);
     }
 
-    // Fetch trending movies (week)
-    public void fetchTrendingMovies(Response.Listener<JSONObject> listener,
-                                    Response.ErrorListener errorListener) {
-        JsonObjectRequest request = new JsonObjectRequest(
-                Request.Method.GET,
-                TRENDING_MOVIES_URL,
-                null,
-                listener,
-                errorListener
-        ) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> headers = new HashMap<String, String>();
-                headers.put("accept", "application/json");
-                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
-                return headers;
-            }
-        };
-
-        queue.add(request);
-    }
-
-    // Fetch popular movies list
-    public void fetchPopularMovies(Response.Listener<JSONObject> listener,
-                                   Response.ErrorListener errorListener) {
-        JsonObjectRequest request = new JsonObjectRequest(
-                Request.Method.GET,
-                POPULAR_MOVIES_URL,
-                null,
-                listener,
-                errorListener
-        ) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> headers = new HashMap<String, String>();
-                headers.put("accept", "application/json");
-                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
-                return headers;
-            }
-        };
-
-        queue.add(request);
-    }
-
-    // Fetch popular TV series list
-    public void fetchPopularSeries(Response.Listener<JSONObject> listener,
-                                   Response.ErrorListener errorListener) {
-        JsonObjectRequest request = new JsonObjectRequest(
-                Request.Method.GET,
-                POPULAR_SERIES_URL,
-                null,
-                listener,
-                errorListener
-        ) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> headers = new HashMap<String, String>();
-                headers.put("accept", "application/json");
-                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
-                return headers;
-            }
-        };
-
-        queue.add(request);
-    }
-
-    // Unified details fetcher for Movie or TV with language parameter and optional tag
-    public void fetchDetails(int tmdbID, boolean isTv, String tag, JsonListener callback) {
-        String base = isTv ? TV_SERIES_INFO_URL : MOVIE_INFO_URL;
-        String url = base + tmdbID + "?language=en-US";
-        JsonObjectRequest request = new JsonObjectRequest(
-                Request.Method.GET,
-                url,
-                null,
-                response -> callback.onResponse(response),
-                error -> {
-                    error.printStackTrace();
-                    callback.onResponse(null);
-                }
-        ) {
-            //https://stackoverflow.com/questions/63870554/how-to-add-a-header-to-a-request-from-volley-library
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> headers = new HashMap<String, String>();
-                headers.put("accept", "application/json");
-                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
-                return headers;
-            }
-        };
-
-        //https://stackoverflow.com/questions/36127870/how-to-set-tag-to-the-request-and-get-it-from-response-volley-asynchronous-reque
-        //Idea from ChatGPT
-        if (tag != null) request.setTag(tag);
-        queue.add(request);
-    }
-
     //Extracts poster URL from movie JSON
     public String extractMoviePosterURL (JSONObject movieDetails) {
         try {
@@ -272,28 +138,6 @@ public class NetworkUtils {
         }
 
         return null;
-    }
-
-    // Builders for various image sizes
-    public String buildOriginalImageUrl(String path) {
-        if (path == null) return null;
-        String trimmed = path.trim();
-        if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)) return null;
-        return TMDB_IMAGE_URL + trimmed;
-    }
-
-    public String buildPosterUrl(String posterPath) {
-        if (posterPath == null) return null;
-        String trimmed = posterPath.trim();
-        if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)) return null;
-        return TMDB_POSTER_W342_URL + trimmed;
-    }
-
-    public String buildProfileUrl(String profilePath) {
-        if (profilePath == null) return null;
-        String trimmed = profilePath.trim();
-        if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)) return null;
-        return TMDB_PROFILE_URL + trimmed;
     }
 
     //Fetching raw data for spinner setup
@@ -334,6 +178,123 @@ public class NetworkUtils {
                 callback.onSeriesProgressCalculated(progress, seriesInfo);
             }
         });
+    }
+
+    public int calculateSeriesProgress(JSONObject series, int currentSeason, int currentEpisode) {
+        if (series == null) {
+            return 0;
+        }
+
+        try {
+            JSONArray seasons = series.getJSONArray("seasons");
+            int totalEpisodes = 0;
+            int totalWatched = 0;
+
+            for (int i=0; i<seasons.length(); i++) {
+                JSONObject season = seasons.getJSONObject(i);
+                if (season.getInt("season_number") == 0) continue; //skip specials
+
+                if (season.getInt("season_number") < currentSeason) {
+                    totalWatched += season.getInt("episode_count");
+                }
+
+                totalEpisodes += season.getInt("episode_count");
+            }
+
+            totalWatched += currentEpisode;
+
+            return (int)(((double)totalWatched / totalEpisodes) * 100);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    // ------------------ MATHEESHA --------------------------------------------------------------------------------------------------
+
+    // Generic authenticated GET returning a JSONObject
+    public void enqueueJsonObjectRequest(String url,
+                                         Response.Listener<JSONObject> listener,
+                                         Response.ErrorListener errorListener) {
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                listener,
+                errorListener
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+
+        queue.add(request);
+    }
+
+    // Generic JSON callback used for multiple endpoints
+    public interface JsonListener {
+        void onResponse(JSONObject json);
+    }
+
+    // Resolve TMDB id and media type from IMDb id
+    public interface IdResolveListener {
+        void onResolved(Integer tmdbId, Boolean isTv);
+    }
+
+    // Unified details fetcher for Movie or TV with language parameter and optional tag
+    public void fetchDetails(int tmdbID, boolean isTv, String tag, JsonListener callback) {
+        String base = isTv ? TV_SERIES_INFO_URL : MOVIE_INFO_URL;
+        String url = base + tmdbID + "?language=en-US";
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                response -> callback.onResponse(response),
+                error -> {
+                    error.printStackTrace();
+                    callback.onResponse(null);
+                }
+        ) {
+            //https://stackoverflow.com/questions/63870554/how-to-add-a-header-to-a-request-from-volley-library
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+
+        //https://stackoverflow.com/questions/36127870/how-to-set-tag-to-the-request-and-get-it-from-response-volley-asynchronous-reque
+        //Idea from ChatGPT
+        if (tag != null) request.setTag(tag);
+        queue.add(request);
+    }
+
+    // Builders for various image sizes
+    public String buildOriginalImageUrl(String path) {
+        if (path == null) return null;
+        String trimmed = path.trim();
+        if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)) return null;
+        return TMDB_IMAGE_URL + trimmed;
+    }
+
+    public String buildPosterUrl(String posterPath) {
+        if (posterPath == null) return null;
+        String trimmed = posterPath.trim();
+        if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)) return null;
+        return TMDB_POSTER_W342_URL + trimmed;
+    }
+
+    public String buildProfileUrl(String profilePath) {
+        if (profilePath == null) return null;
+        String trimmed = profilePath.trim();
+        if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)) return null;
+        return TMDB_PROFILE_URL + trimmed;
     }
 
     // Fetch credits for movie/tv
@@ -483,34 +444,75 @@ public class NetworkUtils {
         queue.add(request);
     }
 
-    public int calculateSeriesProgress(JSONObject series, int currentSeason, int currentEpisode) {
-        if (series == null) {
-            return 0;
-        }
+    // ------------------ BUDDIMA ----------------------------------------------------------------------------------------------------
 
-        try {
-            JSONArray seasons = series.getJSONArray("seasons");
-            int totalEpisodes = 0;
-            int totalWatched = 0;
-
-            for (int i=0; i<seasons.length(); i++) {
-                JSONObject season = seasons.getJSONObject(i);
-                if (season.getInt("season_number") == 0) continue; //skip specials
-
-                if (season.getInt("season_number") < currentSeason) {
-                    totalWatched += season.getInt("episode_count");
-                }
-
-                totalEpisodes += season.getInt("episode_count");
+    // Fetch trending movies (week)
+    public void fetchTrendingMovies(Response.Listener<JSONObject> listener,
+                                    Response.ErrorListener errorListener) {
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                TRENDING_MOVIES_URL,
+                null,
+                listener,
+                errorListener
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
             }
+        };
 
-            totalWatched += currentEpisode;
-
-            return (int)(((double)totalWatched / totalEpisodes) * 100);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return 0;
-        }
+        queue.add(request);
     }
+
+    // Fetch popular movies list
+    public void fetchPopularMovies(Response.Listener<JSONObject> listener,
+                                   Response.ErrorListener errorListener) {
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                POPULAR_MOVIES_URL,
+                null,
+                listener,
+                errorListener
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+
+        queue.add(request);
+    }
+
+    // Fetch popular TV series list
+    public void fetchPopularSeries(Response.Listener<JSONObject> listener,
+                                   Response.ErrorListener errorListener) {
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                POPULAR_SERIES_URL,
+                null,
+                listener,
+                errorListener
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+
+        queue.add(request);
+    }
+
+    // ------------------ SASVIN -----------------------------------------------------------------------------------------------------
+
 
 }

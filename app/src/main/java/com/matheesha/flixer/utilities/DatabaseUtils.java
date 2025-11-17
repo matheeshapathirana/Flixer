@@ -1,14 +1,21 @@
 package com.matheesha.flixer.utilities;
 
+import android.widget.Toast;
+
 import androidx.annotation.Nullable;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.matheesha.flixer.FilmDetailsActivity;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class DatabaseUtils {
     //public static final String USER_DOCUMENT_ID = "zxG3kkJH4WwOu4elGsCx";
@@ -18,6 +25,8 @@ public class DatabaseUtils {
 
     private static DatabaseUtils instance;
     private final FirebaseFirestore db;
+
+    //------------------------------- SANUPA -------------------------------------------------------------------------------
 
     private DatabaseUtils() {
         db = FirebaseFirestore.getInstance();
@@ -106,5 +115,37 @@ public class DatabaseUtils {
                 .delete()
                 .addOnSuccessListener(success -> listener.onDeleteSuccess())
                 .addOnFailureListener(error -> listener.onDeleteFailure(error));
+    }
+
+    //-------------------------------------------------- MATHEESHA --------------------------------------------------------------------------
+
+    public interface addToWatchlistListener {
+        void onAddSuccess();
+        void onAddFailure(Exception error);
+    }
+
+    public void addToWatchlist(String collection, String imdbFromExternal, Map<String, Object> movie, addToWatchlistListener listener) {
+         db.collection("users")
+                .document(getCurrentUserID())
+                .collection(collection)
+                .document(imdbFromExternal)
+                .set(movie)
+                .addOnSuccessListener(success -> listener.onAddSuccess())
+                .addOnFailureListener(error -> listener.onAddFailure(error));
+    }
+
+    public interface checkIfInWatchlistListener {
+        void inWatchlist(DocumentSnapshot doc);
+        void notInWatchlist(Exception error);
+    }
+
+    public void checkIfInWatchlist(String collection, String imdbFromExternal, checkIfInWatchlistListener listener) {
+        db.collection("users")
+                .document(DatabaseUtils.getCurrentUserID())
+                .collection(collection)
+                .document(imdbFromExternal)
+                .get()
+                .addOnSuccessListener(doc -> listener.inWatchlist(doc))
+                .addOnFailureListener(error -> listener.notInWatchlist(error));
     }
 }
