@@ -212,29 +212,6 @@ public class NetworkUtils {
 
     // ------------------ MATHEESHA --------------------------------------------------------------------------------------------------
 
-    // Generic authenticated GET returning a JSONObject
-    public void enqueueJsonObjectRequest(String url,
-                                         Response.Listener<JSONObject> listener,
-                                         Response.ErrorListener errorListener) {
-        JsonObjectRequest request = new JsonObjectRequest(
-                Request.Method.GET,
-                url,
-                null,
-                listener,
-                errorListener
-        ) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> headers = new HashMap<String, String>();
-                headers.put("accept", "application/json");
-                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
-                return headers;
-            }
-        };
-
-        queue.add(request);
-    }
-
     // Generic JSON callback used for multiple endpoints
     public interface JsonListener {
         void onResponse(JSONObject json);
@@ -445,6 +422,29 @@ public class NetworkUtils {
     }
 
     // ------------------ BUDDIMA ----------------------------------------------------------------------------------------------------
+
+    // Generic authenticated GET returning a JSONObject
+    public void enqueueJsonObjectRequest(String url,
+                                         Response.Listener<JSONObject> listener,
+                                         Response.ErrorListener errorListener) {
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                url,
+                null,
+                listener,
+                errorListener
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("accept", "application/json");
+                headers.put("Authorization", "Bearer " + TMDB_ACCESS_TOKEN);
+                return headers;
+            }
+        };
+
+        queue.add(request);
+    }
 
     // Fetch trending movies (week)
     public void fetchTrendingMovies(Response.Listener<JSONObject> listener,
