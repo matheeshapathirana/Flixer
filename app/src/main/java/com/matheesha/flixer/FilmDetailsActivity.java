@@ -535,16 +535,16 @@ public class FilmDetailsActivity extends AppCompatActivity {
 
     private String safeField(JSONObject obj, String key) {
         if (obj == null || !obj.has(key)){
-            return "";
+            return "N/A";
         }
 
         String val = obj.optString(key, "");
         if (val == null){
-            return "";
+            return "N/A";
         }
 
         if ("N/A".equalsIgnoreCase(val.trim())){
-            return "";
+            return "N/A";
         }
 
         return val.trim();
