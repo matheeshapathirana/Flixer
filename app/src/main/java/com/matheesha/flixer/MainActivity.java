@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //REFERENCE: https://youtu.be/jOFLmKMOcK0?si=7n8Kh6Q9sm6TJgss
     private void setupBottomNav() {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_nav);
         if (bottomNav == null) return;
@@ -63,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    //REFERENCE: https://youtu.be/jOFLmKMOcK0?si=7n8Kh6Q9sm6TJgss
     private void replaceFragment(Fragment fragment) {
         getSupportFragmentManager()
                 .beginTransaction()
